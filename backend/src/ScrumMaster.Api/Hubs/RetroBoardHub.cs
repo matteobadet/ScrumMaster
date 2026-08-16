@@ -62,6 +62,17 @@ public class RetroBoardHub(ScrumMasterDbContext db, PostItService postItService)
             );
     }
 
+    public async Task MovePostIt(Guid boardId, Guid postItId, Guid colonneId)
+    {
+        await ResolveCallerParticipantIdAsync(boardId);
+
+        var result = await RunOrThrowHubExceptionAsync(() => postItService.MoveAsync(boardId, postItId, colonneId));
+
+        await Clients
+            .Group(boardId.ToString())
+            .SendAsync("PostItMoved", new { postItId = result.Id, colonneId = result.ColonneId });
+    }
+
     public async Task EditPostIt(Guid boardId, Guid postItId, string texte)
     {
         var callerId = await ResolveCallerParticipantIdAsync(boardId);

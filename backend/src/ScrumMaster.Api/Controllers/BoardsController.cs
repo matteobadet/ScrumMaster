@@ -6,7 +6,7 @@ namespace ScrumMaster.Api.Controllers;
 
 [ApiController]
 [Route("api/boards")]
-public class BoardsController(BoardService boardService) : ControllerBase
+public class BoardsController(BoardService boardService, ParticipantService participantService) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<CreateBoardResponse>> CreateBoard(CreateBoardRequest request)
@@ -20,5 +20,12 @@ public class BoardsController(BoardService boardService) : ControllerBase
     {
         var state = await boardService.GetBoardStateAsync(boardId);
         return Ok(state);
+    }
+
+    [HttpPost("{boardId:guid}/participants")]
+    public async Task<ActionResult<JoinBoardResponse>> JoinBoard(Guid boardId, JoinBoardRequest request)
+    {
+        var result = await participantService.JoinAsync(boardId, request.NomAffiche);
+        return Created(string.Empty, new JoinBoardResponse(result.ParticipantId, result.Role));
     }
 }

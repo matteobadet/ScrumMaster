@@ -20,6 +20,7 @@ builder.Services.AddSignalR();
 
 builder.Services.AddScoped<BoardService>();
 builder.Services.AddScoped<PostItService>();
+builder.Services.AddScoped<ParticipantService>();
 
 const string FrontendDevCorsPolicy = "FrontendDev";
 builder.Services.AddCors(options =>

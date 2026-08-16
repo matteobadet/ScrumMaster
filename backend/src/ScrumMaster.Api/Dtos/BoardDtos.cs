@@ -11,6 +11,10 @@ public record CreateBoardRequest(
 
 public record CreateBoardResponse(Guid BoardId, Guid ParticipantId, string Role, string LienAcces);
 
+public record JoinBoardRequest(string NomAffiche);
+
+public record JoinBoardResponse(Guid ParticipantId, string Role);
+
 public record ThemeRefDto(Guid Id, string Nom);
 
 public record ColonneDto(Guid Id, string Intitule, int Ordre);

@@ -51,6 +51,25 @@ public class PostItService(ScrumMasterDbContext db)
         return new PostItResult(postIt.Id, postIt.ColonneId, postIt.Texte, auteur.NomAffiche, auteur.Id);
     }
 
+    public async Task<PostItResult> MoveAsync(Guid boardId, Guid postItId, Guid colonneId)
+    {
+        var board = await GetBoardWithThemeAsync(boardId);
+        ValidateColonneAppartientAuBoard(board, colonneId);
+
+        var postIt = await db.PostIts.FirstOrDefaultAsync(p => p.Id == postItId && p.BoardId == boardId);
+        if (postIt is null)
+        {
+            throw new DomainNotFoundException($"Post-it {postItId} introuvable sur ce board.");
+        }
+
+        postIt.ColonneId = colonneId;
+        postIt.DateModification = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+
+        var auteur = await db.Participants.FirstAsync(p => p.Id == postIt.AuteurParticipantId);
+        return new PostItResult(postIt.Id, postIt.ColonneId, postIt.Texte, auteur.NomAffiche, auteur.Id);
+    }
+
     public async Task DeleteAsync(Guid boardId, Guid postItId, Guid callerParticipantId)
     {
         var postIt = await GetOwnedPostItAsync(boardId, postItId, callerParticipantId);

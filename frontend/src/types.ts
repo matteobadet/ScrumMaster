@@ -25,6 +25,11 @@ export interface CreateBoardResponse {
   lienAcces: string;
 }
 
+export interface JoinBoardResponse {
+  participantId: string;
+  role: 'Facilitateur' | 'Participant';
+}
+
 export interface ThemeRef {
   id: string;
   nom: string;

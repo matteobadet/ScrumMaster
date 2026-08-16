@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import type { PostItState } from '../types';
+import type { ColonneState, PostItState } from '../types';
 
 interface PostItProps {
   postIt: PostItState;
   isAuthor: boolean;
+  autresColonnes: ColonneState[];
   onEdit: (texte: string) => void;
   onDelete: () => void;
+  onMove: (colonneId: string) => void;
 }
 
-export function PostIt({ postIt, isAuthor, onEdit, onDelete }: PostItProps) {
+export function PostIt({ postIt, isAuthor, autresColonnes, onEdit, onDelete, onMove }: PostItProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(postIt.texte);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +49,21 @@ export function PostIt({ postIt, isAuthor, onEdit, onDelete }: PostItProps) {
           <p className="post-it-meta">
             {postIt.auteur} · {postIt.nombreVotes} vote(s)
           </p>
+          {autresColonnes.length > 0 && (
+            <label>
+              Déplacer vers
+              <select value="" onChange={(e) => e.target.value && onMove(e.target.value)}>
+                <option value="" disabled>
+                  Choisir une colonne
+                </option>
+                {autresColonnes.map((colonne) => (
+                  <option key={colonne.id} value={colonne.id}>
+                    {colonne.intitule}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           {isAuthor && (
             <>
               <button type="button" onClick={startEditing}>

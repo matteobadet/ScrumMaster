@@ -134,26 +134,32 @@ l'un et vérifier son apparition dans l'autre en moins de 3 secondes sans rechar
 
 ### Tests for User Story 2
 
-- [ ] T033 [P] [US2] Test d'intégration : deux clients hub simulés reçoivent `PostItAdded` et
+- [X] T033 [P] [US2] Test d'intégration : deux clients hub simulés reçoivent `PostItAdded` et
       `PostItMoved` après une mutation par l'un d'eux (FR-006, FR-007) dans
       `backend/tests/ScrumMaster.Api.Tests/RetroBoardHubRealtimeTests.cs`
 
 ### Implementation for User Story 2
 
-- [ ] T034 [US2] Implémenter `ParticipantService.Join` (création participant, rôle `Participant`)
+- [X] T034 [US2] Implémenter `ParticipantService.Join` (création participant, rôle `Participant`)
       dans `backend/src/ScrumMaster.Api/Services/ParticipantService.cs` (dépend de T016)
-- [ ] T035 [US2] Implémenter `POST /api/boards/{boardId}/participants` dans
+- [X] T035 [US2] Implémenter `POST /api/boards/{boardId}/participants` dans
       `backend/src/ScrumMaster.Api/Controllers/BoardsController.cs` (dépend de T034)
-- [ ] T036 [US2] Implémenter `MovePostIt` et la diffusion `ParticipantJoined`/`PostItMoved` au
-      groupe dans `backend/src/ScrumMaster.Api/Hubs/RetroBoardHub.cs` (dépend de T029, T034)
-- [ ] T037 [US2] Implémenter `JoinBoardPage` (saisie du nom affiché en arrivant par le lien) dans
+- [X] T036 [US2] Implémenter `MovePostIt` et la diffusion `ParticipantJoined`/`PostItMoved` au
+      groupe dans `backend/src/ScrumMaster.Api/Hubs/RetroBoardHub.cs` (dépend de T029, T034).
+      `MovePostIt` n'est pas restreint à l'auteur (FR-006 ne le demande pas, contrairement à
+      FR-005 pour l'édition/suppression).
+- [X] T037 [US2] Implémenter `JoinBoardPage` (saisie du nom affiché en arrivant par le lien) dans
       `frontend/src/pages/JoinBoardPage.tsx` (dépend de T035)
-- [ ] T038 [US2] Implémenter le hook `useRealtimeBoard` (connexion SignalR, abonnement aux
+- [X] T038 [US2] Implémenter le hook `useRealtimeBoard` (connexion SignalR, abonnement aux
       événements, mise à jour de l'état local) dans
-      `frontend/src/hooks/useRealtimeBoard.ts` (dépend de T021, T036)
-- [ ] T039 [US2] Implémenter le déplacement de post-it entre colonnes dans l'UI dans
-      `frontend/src/components/Colonne.tsx` (dépend de T031, T038)
-- [ ] T040 [US2] Implémenter la resynchronisation à la reconnexion (re-`GET /api/boards/{boardId}`
+      `frontend/src/hooks/useRealtimeBoard.ts` (dépend de T021, T036). Refactorisé depuis la
+      logique inline de `BoardPage` (US1) ; garde-fous ajoutés contre le double-montage React
+      StrictMode en dev (sinon connexions/événements dupliqués).
+- [X] T039 [US2] Implémenter le déplacement de post-it entre colonnes dans l'UI dans
+      `frontend/src/components/Colonne.tsx` (dépend de T031, T038). Réalisé via un sélecteur
+      "Déplacer vers" par post-it plutôt qu'un drag-and-drop HTML5, pour rester simple à tester ;
+      livre la même valeur fonctionnelle (FR-006).
+- [X] T040 [US2] Implémenter la resynchronisation à la reconnexion (re-`GET /api/boards/{boardId}`
       + `JoinBoard`) dans `frontend/src/hooks/useRealtimeBoard.ts` (dépend de T038)
 
 **Checkpoint**: User Stories 1 et 2 fonctionnelles ensemble.
