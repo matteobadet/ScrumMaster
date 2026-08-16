@@ -7,6 +7,7 @@ interface PostItProps {
   isAuthor: boolean;
   autresColonnes: ColonneState[];
   votesRestants: number | null;
+  readOnly: boolean;
   onEdit: (texte: string) => void;
   onDelete: () => void;
   onMove: (colonneId: string) => void;
@@ -19,6 +20,7 @@ export function PostIt({
   isAuthor,
   autresColonnes,
   votesRestants,
+  readOnly,
   onEdit,
   onDelete,
   onMove,
@@ -65,10 +67,11 @@ export function PostIt({
             nombreVotes={postIt.nombreVotes}
             aVote={postIt.voteDuParticipant}
             votesRestants={votesRestants}
+            readOnly={readOnly}
             onVote={onVote}
             onRemoveVote={onRemoveVote}
           />
-          {autresColonnes.length > 0 && (
+          {!readOnly && autresColonnes.length > 0 && (
             <label>
               Déplacer vers
               <select value="" onChange={(e) => e.target.value && onMove(e.target.value)}>
@@ -83,7 +86,7 @@ export function PostIt({
               </select>
             </label>
           )}
-          {isAuthor && (
+          {!readOnly && isAuthor && (
             <>
               <button type="button" onClick={startEditing}>
                 Modifier

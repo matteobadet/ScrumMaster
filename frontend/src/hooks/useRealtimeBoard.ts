@@ -142,6 +142,10 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
         });
       });
 
+      connection.on('BoardClosed', () => {
+        setBoard((current) => (current ? { ...current, statut: 'Cloture' } : current));
+      });
+
       connection.on('ParticipantJoined', ({ participantId: id, nomAffiche, role }: ParticipantJoinedEvent) => {
         setBoard((current) => {
           if (!current || current.participants.some((p) => p.id === id)) {

@@ -243,22 +243,35 @@ affichées correspondent exactement à celles définies.
 **Purpose**: Clôture de board (FR-016, transverse à toutes les stories) et mise en état
 déployable.
 
-- [ ] T052 [P] Test d'intégration : toute mutation (`AddPostIt`, `EditPostIt`, `MovePostIt`,
+- [X] T052 [P] Test d'intégration : toute mutation (`AddPostIt`, `EditPostIt`, `MovePostIt`,
       `DeletePostIt`, `Vote`, `RemoveVote`, `ChangeTheme`) est refusée quand `Board.Statut =
       Cloture` (FR-016) dans `backend/tests/ScrumMaster.Api.Tests/BoardClosureTests.cs`
-- [ ] T053 Implémenter `CloseBoard` (facilitateur uniquement) et la diffusion `BoardClosed` dans
+- [X] T053 Implémenter `CloseBoard` (facilitateur uniquement) et la diffusion `BoardClosed` dans
       `backend/src/ScrumMaster.Api/Hubs/RetroBoardHub.cs` (dépend de T036, T043, T048)
-- [ ] T054 Faire respecter le rejet des mutations quand `Board.Statut = Cloture` dans chaque
-      méthode du hub dans `backend/src/ScrumMaster.Api/Hubs/RetroBoardHub.cs` (dépend de T053)
-- [ ] T055 Implémenter le mode lecture seule côté UI à la réception de `BoardClosed` (désactive
-      les contrôles de mutation) dans `frontend/src/pages/BoardPage.tsx` (dépend de T038, T053)
-- [ ] T056 [P] Écrire les manifests `k8s/base/` complets (Deployment `ScrumMaster.Api`, Deployment
-      frontend statique, Service, ConfigMap)
-- [ ] T057 [P] Écrire l'overlay `k8s/overlays/production/` (Ingress Traefik + annotations
+- [X] T054 Faire respecter le rejet des mutations quand `Board.Statut = Cloture` dans chaque
+      méthode du hub dans `backend/src/ScrumMaster.Api/Hubs/RetroBoardHub.cs` (dépend de T053).
+      Garde-fou centralisé dans `Services/BoardClosureGuard.cs`, appliqué dans `PostItService`,
+      `VoteService` et `BoardService.ChangeThemeAsync`/`CloseBoardAsync` plutôt que dupliqué dans
+      chaque méthode du hub.
+- [X] T055 Implémenter le mode lecture seule côté UI à la réception de `BoardClosed` (désactive
+      les contrôles de mutation) dans `frontend/src/pages/BoardPage.tsx` (dépend de T038, T053).
+      Propagé via un prop `readOnly` jusqu'à `Colonne`/`PostIt`/`VoteCounter`.
+- [X] T056 [P] Écrire les manifests `k8s/base/` complets (Deployment `ScrumMaster.Api`, Deployment
+      frontend statique, Service, ConfigMap). Complété par des `Dockerfile` (backend et frontend,
+      non explicitement demandés mais nécessaires pour que les Deployments référencent une image
+      réelle) et un `namespace.yaml` dédié — images et manifests construits et testés localement
+      (`docker build`, `kubectl kustomize`).
+- [X] T057 [P] Écrire l'overlay `k8s/overlays/production/` (Ingress Traefik + annotations
       cert-manager, Secret de connexion à la base PostgreSQL dédiée), strictement séparé des
-      manifests SkillForge (Constitution Principe V)
-- [ ] T058 Exécuter la validation `quickstart.md` de bout en bout (2 navigateurs) et corriger les
-      écarts constatés
+      manifests SkillForge (Constitution Principe V). Ingress à routage par chemin (`/api`,
+      `/hubs` → backend, `/` → frontend) sur un même domaine, pour éviter toute configuration CORS
+      en production ; Secret généré via `secretGenerator` à partir d'un fichier `connection.env`
+      non commité (voir `k8s/README.md`).
+- [X] T058 Exécuter la validation `quickstart.md` de bout en bout (2 navigateurs) et corriger les
+      écarts constatés. Étapes 1-7 validées au fil des phases US1-US4 ; étape 8 (clôture) validée
+      dans cette phase avec un second onglet rejoignant après clôture (lecture seule confirmée) ;
+      étape 9 (reconnexion) couverte par la conception du hook `useRealtimeBoard` (T040) mais non
+      re-testée avec une coupure réseau réelle dans cette dernière passe.
 
 ---
 

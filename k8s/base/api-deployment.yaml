@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scrummaster-api
+  namespace: scrummaster
+  labels:
+    app.kubernetes.io/name: scrummaster-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: scrummaster-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: scrummaster-api
+    spec:
+      containers:
+        - name: api
+          # Construite depuis backend/src/ScrumMaster.Api/Dockerfile (contexte de build =
+          # backend/src/ScrumMaster.Api/), poussée vers le registre du projet.
+          image: ghcr.io/matteobadet/scrummaster-api:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: scrummaster-api-config
+          env:
+            - name: ConnectionStrings__ScrumMasterDb
+              valueFrom:
+                secretKeyRef:
+                  name: scrummaster-db-connection
+                  key: connectionString
+          readinessProbe:
+            httpGet:
+              path: /api/themes
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/themes
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20

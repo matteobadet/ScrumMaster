@@ -2,5 +2,13 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 # Manifests de base ScrumMaster — isolés de SkillForge (Constitution Principe V).
-# Complétés en Phase 7 (Polish) : Deployment API + frontend, Service, ConfigMap.
-resources: []
+# La base PostgreSQL "scrummaster" utilise l'instance Postgres déjà présente sur le cluster
+# (aucun Deployment Postgres ici) ; la chaîne de connexion est fournie par un Secret défini dans
+# l'overlay (k8s/overlays/production/).
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - api-deployment.yaml
+  - api-service.yaml
+  - frontend-deployment.yaml
+  - frontend-service.yaml

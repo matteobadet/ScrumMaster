@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: scrummaster
+  namespace: scrummaster
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        # TODO: remplacer par le domaine réel du VPS avant application.
+        - scrummaster.example.com
+      secretName: scrummaster-tls
+  rules:
+    - host: scrummaster.example.com
+      http:
+        paths:
+          # API REST et hub SignalR routés vers le backend sur le même domaine que le frontend :
+          # aucune configuration CORS n'est nécessaire en production (voir frontend/Dockerfile).
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: scrummaster-api
+                port:
+                  number: 80
+          - path: /hubs
+            pathType: Prefix
+            backend:
+              service:
+                name: scrummaster-api
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: scrummaster-frontend
+                port:
+                  number: 80

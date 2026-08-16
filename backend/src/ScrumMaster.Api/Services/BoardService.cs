@@ -135,6 +135,8 @@ public class BoardService(ScrumMasterDbContext db)
             throw new DomainForbiddenException("Seul le facilitateur peut changer le thème du board.");
         }
 
+        BoardClosureGuard.EnsureActif(board);
+
         var theme = await ResolveThemeAsync(themeId, themePersonnalise);
         db.Themes.Add(theme);
         board.ThemeId = theme.Id;
@@ -156,6 +158,34 @@ public class BoardService(ScrumMasterDbContext db)
             theme.Nom,
             theme.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre)).ToList()
         );
+    }
+
+    public async Task CloseBoardAsync(Guid boardId, Guid callerParticipantId)
+    {
+        var board = await db.Boards.FirstOrDefaultAsync(b => b.Id == boardId);
+        if (board is null)
+        {
+            throw new DomainNotFoundException($"Board {boardId} introuvable.");
+        }
+
+        var caller = await db.Participants.FirstOrDefaultAsync(p => p.Id == callerParticipantId && p.BoardId == boardId);
+        if (caller is null)
+        {
+            throw new DomainNotFoundException($"Participant {callerParticipantId} introuvable sur ce board.");
+        }
+
+        if (caller.Role != ParticipantRole.Facilitateur)
+        {
+            throw new DomainForbiddenException("Seul le facilitateur peut clôturer le board.");
+        }
+
+        if (board.Statut == BoardStatut.Cloture)
+        {
+            throw new DomainValidationException("Ce board est déjà clôturé.");
+        }
+
+        board.Statut = BoardStatut.Cloture;
+        await db.SaveChangesAsync();
     }
 
     private async Task<Theme> ResolveThemeAsync(Guid? themeId, ThemePersonnaliseDto? themePersonnalise)

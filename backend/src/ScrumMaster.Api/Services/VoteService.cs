@@ -11,6 +11,7 @@ public class VoteService(ScrumMasterDbContext db)
     public async Task<VoteResult> VoteAsync(Guid boardId, Guid postItId, Guid participantId)
     {
         var board = await GetBoardAsync(boardId);
+        BoardClosureGuard.EnsureActif(board);
         await EnsurePostItExistsAsync(boardId, postItId);
 
         var dejaVote = await db.Votes.AnyAsync(v => v.PostItId == postItId && v.ParticipantId == participantId);
@@ -36,6 +37,7 @@ public class VoteService(ScrumMasterDbContext db)
     public async Task<VoteResult> RemoveVoteAsync(Guid boardId, Guid postItId, Guid participantId)
     {
         var board = await GetBoardAsync(boardId);
+        BoardClosureGuard.EnsureActif(board);
         await EnsurePostItExistsAsync(boardId, postItId);
 
         var vote = await db.Votes.FirstOrDefaultAsync(v => v.PostItId == postItId && v.ParticipantId == participantId);

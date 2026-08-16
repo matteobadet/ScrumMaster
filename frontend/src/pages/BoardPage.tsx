@@ -53,6 +53,14 @@ export function BoardPage() {
     return <p>Chargement…</p>;
   }
 
+  const estCloture = board.statut === 'Cloture';
+
+  function closeBoard() {
+    if (window.confirm('Clôturer ce board ? Il passera en lecture seule pour tous les participants.')) {
+      invoke('CloseBoard', boardId);
+    }
+  }
+
   function applyThemeChange() {
     setThemeError(null);
 
@@ -85,21 +93,28 @@ export function BoardPage() {
         <a href={`${window.location.origin}/join/${boardId}`}>{`${window.location.origin}/join/${boardId}`}</a>
       </p>
 
-      {participant.role === 'Facilitateur' && (
-        <div className="theme-change">
-          <button type="button" onClick={() => setShowThemeEditor((v) => !v)}>
-            {showThemeEditor ? 'Annuler' : 'Changer le thème'}
+      {estCloture && <p role="status">Ce board est clôturé — lecture seule.</p>}
+
+      {participant.role === 'Facilitateur' && !estCloture && (
+        <>
+          <div className="theme-change">
+            <button type="button" onClick={() => setShowThemeEditor((v) => !v)}>
+              {showThemeEditor ? 'Annuler' : 'Changer le thème'}
+            </button>
+            {showThemeEditor && (
+              <>
+                <ThemeEditor themes={themes} value={themeSelection} onChange={setThemeSelection} />
+                {themeError && <p role="alert">{themeError}</p>}
+                <button type="button" onClick={applyThemeChange}>
+                  Appliquer
+                </button>
+              </>
+            )}
+          </div>
+          <button type="button" onClick={closeBoard}>
+            Clôturer le board
           </button>
-          {showThemeEditor && (
-            <>
-              <ThemeEditor themes={themes} value={themeSelection} onChange={setThemeSelection} />
-              {themeError && <p role="alert">{themeError}</p>}
-              <button type="button" onClick={applyThemeChange}>
-                Appliquer
-              </button>
-            </>
-          )}
-        </div>
+        </>
       )}
 
       <div className="board">
@@ -111,6 +126,7 @@ export function BoardPage() {
             postIts={board.postIts.filter((p) => p.colonneId === colonne.id)}
             currentParticipantId={participant.participantId}
             votesRestants={board.mesVotesRestants}
+            readOnly={estCloture}
             onAddPostIt={(colonneId, texte) => invoke('AddPostIt', boardId, colonneId, texte)}
             onEditPostIt={(postItId, texte) => invoke('EditPostIt', boardId, postItId, texte)}
             onDeletePostIt={(postItId) => invoke('DeletePostIt', boardId, postItId)}

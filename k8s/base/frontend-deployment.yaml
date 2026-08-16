@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scrummaster-frontend
+  namespace: scrummaster
+  labels:
+    app.kubernetes.io/name: scrummaster-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: scrummaster-frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: scrummaster-frontend
+    spec:
+      containers:
+        - name: frontend
+          # Construite depuis frontend/Dockerfile (contexte de build = frontend/), poussée vers
+          # le registre du projet. VITE_API_BASE_URL laissé vide au build : l'Ingress route
+          # /api et /hubs vers le backend sur le même domaine (pas de CORS en production).
+          image: ghcr.io/matteobadet/scrummaster-frontend:latest
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10

@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Overlay de production — étend k8s/base/ avec l'Ingress Traefik/cert-manager et le Secret de
+# connexion PostgreSQL. Strictement séparé des manifests SkillForge (Constitution Principe V).
+
+resources:
+  - ../../base
+  - ingress.yaml
+
+secretGenerator:
+  - name: scrummaster-db-connection
+    namespace: scrummaster
+    # Copier connection.env.example vers connection.env (non commité) avant `kubectl apply -k`.
+    envs:
+      - connection.env
+    type: Opaque
+
+generatorOptions:
+  disableNameSuffixHash: true

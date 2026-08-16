@@ -8,6 +8,7 @@ interface ColonneProps {
   postIts: PostItState[];
   currentParticipantId: string;
   votesRestants: number | null;
+  readOnly: boolean;
   onAddPostIt: (colonneId: string, texte: string) => void;
   onEditPostIt: (postItId: string, texte: string) => void;
   onDeletePostIt: (postItId: string) => void;
@@ -22,6 +23,7 @@ export function Colonne({
   postIts,
   currentParticipantId,
   votesRestants,
+  readOnly,
   onAddPostIt,
   onEditPostIt,
   onDeletePostIt,
@@ -54,6 +56,7 @@ export function Colonne({
             isAuthor={postIt.auteurParticipantId === currentParticipantId}
             autresColonnes={colonnesDisponibles.filter((c) => c.id !== colonne.id)}
             votesRestants={votesRestants}
+            readOnly={readOnly}
             onEdit={(texte) => onEditPostIt(postIt.id, texte)}
             onDelete={() => onDeletePostIt(postIt.id)}
             onMove={(colonneId) => onMovePostIt(postIt.id, colonneId)}
@@ -62,15 +65,17 @@ export function Colonne({
           />
         ))}
       </div>
-      <form onSubmit={handleSubmit}>
-        <textarea
-          value={nouveauTexte}
-          onChange={(e) => setNouveauTexte(e.target.value)}
-          placeholder="Ajouter un post-it"
-        />
-        {error && <p role="alert">{error}</p>}
-        <button type="submit">Ajouter</button>
-      </form>
+      {!readOnly && (
+        <form onSubmit={handleSubmit}>
+          <textarea
+            value={nouveauTexte}
+            onChange={(e) => setNouveauTexte(e.target.value)}
+            placeholder="Ajouter un post-it"
+          />
+          {error && <p role="alert">{error}</p>}
+          <button type="submit">Ajouter</button>
+        </form>
+      )}
     </div>
   );
 }

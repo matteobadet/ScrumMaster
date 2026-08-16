@@ -108,6 +108,15 @@ public class RetroBoardHub(
             );
     }
 
+    public async Task CloseBoard(Guid boardId)
+    {
+        var callerId = await ResolveCallerParticipantIdAsync(boardId);
+
+        await RunOrThrowHubExceptionAsync(() => boardService.CloseBoardAsync(boardId, callerId));
+
+        await Clients.Group(boardId.ToString()).SendAsync("BoardClosed", new { boardId });
+    }
+
     public async Task AddPostIt(Guid boardId, Guid colonneId, string texte)
     {
         var callerId = await ResolveCallerParticipantIdAsync(boardId);

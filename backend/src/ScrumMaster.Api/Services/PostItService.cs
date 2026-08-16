@@ -13,6 +13,7 @@ public class PostItService(ScrumMasterDbContext db)
         ValidateTexte(texte);
 
         var board = await GetBoardWithThemeAsync(boardId);
+        BoardClosureGuard.EnsureActif(board);
         ValidateColonneAppartientAuBoard(board, colonneId);
 
         var auteur = await db.Participants.FirstOrDefaultAsync(p => p.Id == auteurParticipantId && p.BoardId == boardId);
@@ -42,6 +43,8 @@ public class PostItService(ScrumMasterDbContext db)
     {
         ValidateTexte(texte);
 
+        var board = await GetBoardWithThemeAsync(boardId);
+        BoardClosureGuard.EnsureActif(board);
         var postIt = await GetOwnedPostItAsync(boardId, postItId, callerParticipantId);
         postIt.Texte = texte.Trim();
         postIt.DateModification = DateTimeOffset.UtcNow;
@@ -54,6 +57,7 @@ public class PostItService(ScrumMasterDbContext db)
     public async Task<PostItResult> MoveAsync(Guid boardId, Guid postItId, Guid colonneId)
     {
         var board = await GetBoardWithThemeAsync(boardId);
+        BoardClosureGuard.EnsureActif(board);
         ValidateColonneAppartientAuBoard(board, colonneId);
 
         var postIt = await db.PostIts.FirstOrDefaultAsync(p => p.Id == postItId && p.BoardId == boardId);
@@ -72,6 +76,8 @@ public class PostItService(ScrumMasterDbContext db)
 
     public async Task DeleteAsync(Guid boardId, Guid postItId, Guid callerParticipantId)
     {
+        var board = await GetBoardWithThemeAsync(boardId);
+        BoardClosureGuard.EnsureActif(board);
         var postIt = await GetOwnedPostItAsync(boardId, postItId, callerParticipantId);
         db.PostIts.Remove(postIt);
         await db.SaveChangesAsync();
