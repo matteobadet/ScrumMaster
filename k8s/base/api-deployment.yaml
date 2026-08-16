@@ -25,6 +25,11 @@ spec:
           envFrom:
             - configMapRef:
                 name: scrummaster-api-config
+            # Identifiants Bot Framework (MicrosoftAppId/MicrosoftAppPassword/MicrosoftAppTenantId)
+            # — clés de configuration top-level, injectées telles quelles sans préfixe (voir
+            # specs/002-poll-utilite-reunion/research.md#4).
+            - secretRef:
+                name: scrummaster-bot-credentials
           env:
             - name: ConnectionStrings__ScrumMasterDb
               valueFrom:

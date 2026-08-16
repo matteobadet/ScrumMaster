@@ -200,13 +200,24 @@ est cohérent avec la règle FR-009 ; clôturer un poll sans vote et vérifier l
 
 **Purpose**: Exposition du endpoint bot en production et validation complète.
 
-- [ ] T027 [P] Étendre `k8s/overlays/production/ingress.yaml` (specs/001-retro-board-base) pour
-      router le chemin `/api/messages` vers le Service `scrummaster-api` existant
-- [ ] T028 [P] Ajouter les identifiants Bot Framework (`MicrosoftAppId`/`MicrosoftAppPassword`) au
-      Secret Kubernetes de production — distinct du Secret de connexion PostgreSQL (voir
-      research.md#4) — et documenter la procédure dans `k8s/README.md`
-- [ ] T029 Exécuter la validation `quickstart.md` de bout en bout (Bot Framework Emulator ou
-      tests `TestAdapter`) et corriger les écarts constatés
+- [X] T027 [P] Étendre `k8s/overlays/production/ingress.yaml` (specs/001-retro-board-base) pour
+      router le chemin `/api/messages` vers le Service `scrummaster-api` existant. Aucune règle
+      supplémentaire ajoutée : la règle `/api` (Prefix) déjà présente pour le REST API couvre déjà
+      `/api/messages` — une seconde règle aurait été redondante (Constitution Principe VI). Vérifié
+      par `kubectl kustomize k8s/overlays/production`.
+- [X] T028 [P] Ajouter les identifiants Bot Framework (`MicrosoftAppId`/`MicrosoftAppPassword`/
+      `MicrosoftAppTenantId`) au Secret Kubernetes de production — distinct du Secret de connexion
+      PostgreSQL (voir research.md#4) — et documenter la procédure dans `k8s/README.md`. Nouveau
+      Secret `scrummaster-bot-credentials` généré depuis `bot-credentials.env` (non commité, sur le
+      modèle de `connection.env`) dans `k8s/overlays/production/kustomization.yaml`, injecté via
+      `envFrom.secretRef` dans `k8s/base/api-deployment.yaml` (clés top-level, pas de préfixe
+      requis). Build validé avec `kubectl kustomize`.
+- [X] T029 Exécuter la validation `quickstart.md` de bout en bout (Bot Framework Emulator ou
+      tests `TestAdapter`) et corriger les écarts constatés. Aucun tenant Teams réel disponible
+      dans cet environnement : validation faite via la suite `TestAdapter` (39/39 tests), qui
+      couvre les 8 scénarios de quickstart.md un à un (association, déclenchement, vote + revote,
+      poll déjà ouvert, clôture "maintenue", vote après clôture rejeté, clôture "pas nécessaire",
+      clôture sans vote). Aucun écart constaté.
 
 ---
 

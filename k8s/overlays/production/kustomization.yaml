@@ -1,8 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Overlay de production — étend k8s/base/ avec l'Ingress Traefik/cert-manager et le Secret de
-# connexion PostgreSQL. Strictement séparé des manifests SkillForge (Constitution Principe V).
+# Overlay de production — étend k8s/base/ avec l'Ingress Traefik/cert-manager, le Secret de
+# connexion PostgreSQL et le Secret des identifiants Bot Framework (specs/002-poll-utilite-reunion).
+# Strictement séparé des manifests SkillForge (Constitution Principe V).
 
 resources:
   - ../../base
@@ -14,6 +15,13 @@ secretGenerator:
     # Copier connection.env.example vers connection.env (non commité) avant `kubectl apply -k`.
     envs:
       - connection.env
+    type: Opaque
+  - name: scrummaster-bot-credentials
+    namespace: scrummaster
+    # Copier bot-credentials.env.example vers bot-credentials.env (non commité) avant
+    # `kubectl apply -k` — voir specs/002-poll-utilite-reunion/research.md#4.
+    envs:
+      - bot-credentials.env
     type: Opaque
 
 generatorOptions:
