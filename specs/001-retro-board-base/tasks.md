@@ -27,15 +27,16 @@ Application web (voir `plan.md` — Project Structure) : `backend/src/ScrumMaste
 
 **Purpose**: Initialisation des projets backend, frontend et de la structure de déploiement.
 
-- [ ] T001 Créer la structure de dépôt `backend/` et `frontend/` à la racine, conforme à `plan.md`
-- [ ] T002 [P] Initialiser `backend/src/ScrumMaster.Api` comme projet ASP.NET Core Web API
+- [X] T001 Créer la structure de dépôt `backend/` et `frontend/` à la racine, conforme à `plan.md`
+- [X] T002 [P] Initialiser `backend/src/ScrumMaster.Api` comme projet ASP.NET Core Web API
       (.NET 8) avec un fichier de solution `ScrumMaster.sln` à la racine
-- [ ] T003 [P] Initialiser `backend/tests/ScrumMaster.Api.Tests` comme projet de tests xUnit
+- [X] T003 [P] Initialiser `backend/tests/ScrumMaster.Api.Tests` comme projet de tests xUnit
       référençant `ScrumMaster.Api`
-- [ ] T004 [P] Initialiser `frontend/` comme projet Vite + React 18 + TypeScript
-- [ ] T005 [P] Configurer le linting/formatage : `.editorconfig` + `dotnet format` pour le
-      backend, ESLint + Prettier pour le frontend
-- [ ] T006 [P] Scaffolder `k8s/base/kustomization.yaml` (structure Kustomize vide), isolée de
+- [X] T004 [P] Initialiser `frontend/` comme projet Vite + React + TypeScript (le scaffold Vite
+      actuel installe React 19, compatible ; plan.md à mettre à jour en conséquence)
+- [X] T005 [P] Configurer le linting/formatage : `.editorconfig` pour le backend, oxlint +
+      Prettier pour le frontend (le template Vite fournit oxlint plutôt qu'ESLint)
+- [X] T006 [P] Scaffolder `k8s/base/kustomization.yaml` (structure Kustomize vide), isolée de
       tout manifeste SkillForge (Constitution Principe V)
 
 ---
@@ -47,28 +48,28 @@ user stories.
 
 **⚠️ CRITICAL**: Aucune user story ne démarre avant la fin de cette phase.
 
-- [ ] T007 Ajouter les paquets EF Core + Npgsql à `ScrumMaster.Api` et configurer la chaîne de
+- [X] T007 Ajouter les paquets EF Core + Npgsql à `ScrumMaster.Api` et configurer la chaîne de
       connexion PostgreSQL (base dédiée `scrummaster`) via la configuration d'environnement
-- [ ] T008 Créer le squelette de `ScrumMasterDbContext` dans
+- [X] T008 Créer le squelette de `ScrumMasterDbContext` dans
       `backend/src/ScrumMaster.Api/Data/ScrumMasterDbContext.cs`
-- [ ] T009 [P] Créer le modèle `Equipe` dans `backend/src/ScrumMaster.Api/Models/Equipe.cs`
-- [ ] T010 [P] Créer le modèle `Theme` dans `backend/src/ScrumMaster.Api/Models/Theme.cs`
-- [ ] T011 [P] Créer le modèle `Colonne` dans `backend/src/ScrumMaster.Api/Models/Colonne.cs`
-- [ ] T012 [P] Créer le modèle `Board` dans `backend/src/ScrumMaster.Api/Models/Board.cs`
-- [ ] T013 [P] Créer le modèle `Participant` dans
+- [X] T009 [P] Créer le modèle `Equipe` dans `backend/src/ScrumMaster.Api/Models/Equipe.cs`
+- [X] T010 [P] Créer le modèle `Theme` dans `backend/src/ScrumMaster.Api/Models/Theme.cs`
+- [X] T011 [P] Créer le modèle `Colonne` dans `backend/src/ScrumMaster.Api/Models/Colonne.cs`
+- [X] T012 [P] Créer le modèle `Board` dans `backend/src/ScrumMaster.Api/Models/Board.cs`
+- [X] T013 [P] Créer le modèle `Participant` dans
       `backend/src/ScrumMaster.Api/Models/Participant.cs`
-- [ ] T014 [P] Créer le modèle `PostIt` dans `backend/src/ScrumMaster.Api/Models/PostIt.cs`
-- [ ] T015 [P] Créer le modèle `Vote` dans `backend/src/ScrumMaster.Api/Models/Vote.cs`
-- [ ] T016 Configurer dans `ScrumMasterDbContext` les relations, la contrainte d'unicité
+- [X] T014 [P] Créer le modèle `PostIt` dans `backend/src/ScrumMaster.Api/Models/PostIt.cs`
+- [X] T015 [P] Créer le modèle `Vote` dans `backend/src/ScrumMaster.Api/Models/Vote.cs`
+- [X] T016 Configurer dans `ScrumMasterDbContext` les relations, la contrainte d'unicité
       `(PostItId, ParticipantId)` sur `Vote`, et les champs obligatoires (dépend de T009-T015)
-- [ ] T017 Générer et appliquer la migration EF Core initiale du schéma dans
+- [X] T017 Générer et appliquer la migration EF Core initiale du schéma dans
       `backend/src/ScrumMaster.Api/Data/Migrations/` (dépend de T016)
-- [ ] T018 Semer les thèmes prédéfinis (Start/Stop/Continue, Mad/Sad/Glad) dans
+- [X] T018 Semer les thèmes prédéfinis (Start/Stop/Continue, Mad/Sad/Glad) dans
       `backend/src/ScrumMaster.Api/Data/ThemeSeeder.cs` (dépend de T017)
-- [ ] T019 Enregistrer EF Core et SignalR, et mapper la route du hub `/hubs/retro-board` dans
+- [X] T019 Enregistrer EF Core et SignalR, et mapper la route du hub `/hubs/retro-board` dans
       `backend/src/ScrumMaster.Api/Program.cs` (dépend de T007)
-- [ ] T020 [P] Créer le client REST de base dans `frontend/src/services/apiClient.ts`
-- [ ] T021 [P] Créer le wrapper client SignalR dans `frontend/src/services/realtimeClient.ts`
+- [X] T020 [P] Créer le client REST de base dans `frontend/src/services/apiClient.ts`
+- [X] T021 [P] Créer le wrapper client SignalR dans `frontend/src/services/realtimeClient.ts`
 
 **Checkpoint**: Fondations prêtes — l'implémentation des user stories peut commencer.
 
@@ -85,37 +86,39 @@ vérifier que le contenu persiste.
 
 ### Tests for User Story 1
 
-- [ ] T022 [P] [US1] Test d'intégration : `POST /api/boards` crée un board avec le facilitateur et
+- [X] T022 [P] [US1] Test d'intégration : `POST /api/boards` crée un board avec le facilitateur et
       applique le thème par défaut si aucun n'est choisi (FR-001, FR-002, FR-013) dans
       `backend/tests/ScrumMaster.Api.Tests/BoardsControllerTests.cs`
-- [ ] T023 [P] [US1] Test d'intégration : `AddPostIt`/`EditPostIt`/`DeletePostIt` refusent un
-      texte vide et une modification par un non-auteur (FR-004, FR-005, FR-015) dans
+- [X] T023 [P] [US1] Test d'intégration : `AddPostIt`/`EditPostIt` refusent un texte vide et une
+      modification par un non-auteur (FR-004, FR-005, FR-015) dans
       `backend/tests/ScrumMaster.Api.Tests/RetroBoardHubTests.cs`
 
 ### Implementation for User Story 1
 
-- [ ] T024 [US1] Implémenter `GET /api/themes` dans
+- [X] T024 [US1] Implémenter `GET /api/themes` dans
       `backend/src/ScrumMaster.Api/Controllers/ThemesController.cs` (dépend de T018)
-- [ ] T025 [US1] Implémenter `BoardService.CreateBoard` (validation Area Path/Iteration non
+- [X] T025 [US1] Implémenter `BoardService.CreateBoard` (validation Area Path/Iteration non
       vides, application du thème par défaut) dans
       `backend/src/ScrumMaster.Api/Services/BoardService.cs` (dépend de T016)
-- [ ] T026 [US1] Implémenter `POST /api/boards` dans
+- [X] T026 [US1] Implémenter `POST /api/boards` dans
       `backend/src/ScrumMaster.Api/Controllers/BoardsController.cs` (dépend de T025)
-- [ ] T027 [US1] Implémenter `GET /api/boards/{boardId}` (état complet du board) dans
+- [X] T027 [US1] Implémenter `GET /api/boards/{boardId}` (état complet du board) dans
       `backend/src/ScrumMaster.Api/Controllers/BoardsController.cs` (dépend de T026)
-- [ ] T028 [US1] Implémenter `PostItService` (ajout/édition/suppression, texte non vide, contrôle
+- [X] T028 [US1] Implémenter `PostItService` (ajout/édition/suppression, texte non vide, contrôle
       auteur) dans `backend/src/ScrumMaster.Api/Services/PostItService.cs` (dépend de T016)
-- [ ] T029 [US1] Implémenter `RetroBoardHub` avec `JoinBoard`, `AddPostIt`, `EditPostIt`,
+- [X] T029 [US1] Implémenter `RetroBoardHub` avec `JoinBoard`, `AddPostIt`, `EditPostIt`,
       `DeletePostIt` dans `backend/src/ScrumMaster.Api/Hubs/RetroBoardHub.cs` (dépend de T019,
       T028)
-- [ ] T030 [US1] Implémenter `CreateBoardPage` (formulaire Area Path, Iteration, thème, nom
+- [X] T030 [US1] Implémenter `CreateBoardPage` (formulaire Area Path, Iteration, thème, nom
       affiché) dans `frontend/src/pages/CreateBoardPage.tsx` (dépend de T024, T026)
-- [ ] T031 [US1] Implémenter `BoardPage`, `Colonne` et `PostIt` (affichage, ajout/édition/
+- [X] T031 [US1] Implémenter `BoardPage`, `Colonne` et `PostIt` (affichage, ajout/édition/
       suppression via le hub) dans `frontend/src/pages/BoardPage.tsx`,
       `frontend/src/components/Colonne.tsx`, `frontend/src/components/PostIt.tsx` (dépend de
-      T027, T029, T021)
-- [ ] T032 [US1] Ajouter la validation et l'affichage d'erreur côté client pour un post-it vide
-      dans `frontend/src/components/PostIt.tsx` (dépend de T031)
+      T027, T029, T021). Connexion SignalR gérée directement dans `BoardPage` pour ce périmètre
+      US1 ; le hook dédié `useRealtimeBoard` (T038, US2) la généralisera.
+- [X] T032 [US1] Ajouter la validation et l'affichage d'erreur côté client pour un post-it vide
+      dans `frontend/src/components/PostIt.tsx` et `frontend/src/components/Colonne.tsx` (dépend
+      de T031)
 
 **Checkpoint**: User Story 1 fonctionnelle de façon autonome (facilitateur seul).
 

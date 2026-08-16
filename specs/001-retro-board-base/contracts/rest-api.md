@@ -81,6 +81,7 @@ Story 2, scénario 3). Refusé (404) si le board n'existe pas.
       "colonneId": "guid",
       "texte": "…",
       "auteur": "Alex",
+      "auteurParticipantId": "guid",
       "nombreVotes": 2
     }
   ],

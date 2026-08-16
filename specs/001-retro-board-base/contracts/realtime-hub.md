@@ -31,7 +31,7 @@ source de vérité unique côté client) :
 | Événement | Payload | Déclenché par |
 |-----------|---------|----------------|
 | `ParticipantJoined` | `{ participantId, nomAffiche, role, votesRestants }` | `JoinBoard` |
-| `PostItAdded` | `{ postIt }` | `AddPostIt` |
+| `PostItAdded` | `{ postIt }` (inclut `auteurParticipantId`, nécessaire au client pour déterminer s'il est l'auteur) | `AddPostIt` |
 | `PostItUpdated` | `{ postItId, texte }` | `EditPostIt` |
 | `PostItMoved` | `{ postItId, colonneId }` | `MovePostIt` |
 | `PostItDeleted` | `{ postItId }` | `DeletePostIt` |
