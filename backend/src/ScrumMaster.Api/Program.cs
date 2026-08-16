@@ -1,4 +1,7 @@
+using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.EntityFrameworkCore;
+using ScrumMaster.Api.Bots;
 using ScrumMaster.Api.Data;
 using ScrumMaster.Api.Hubs;
 using ScrumMaster.Api.Middleware;
@@ -22,6 +25,16 @@ builder.Services.AddScoped<BoardService>();
 builder.Services.AddScoped<PostItService>();
 builder.Services.AddScoped<ParticipantService>();
 builder.Services.AddScoped<VoteService>();
+builder.Services.AddScoped<PollService>();
+
+// Bot Framework (specs/002-poll-utilite-reunion) — identifiants via
+// MicrosoftAppId/MicrosoftAppPassword/MicrosoftAppTenantId (appsettings / Secret Kubernetes).
+// CloudAdapter construit sa propre ConfigurationBotFrameworkAuthentication à partir de
+// IConfiguration : ne pas enregistrer BotFrameworkAuthentication séparément, sous peine de
+// rendre ses deux constructeurs éligibles et donc ambigus pour le conteneur DI.
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IBotFrameworkHttpAdapter, CloudAdapter>();
+builder.Services.AddTransient<IBot, RetroPollBot>();
 
 const string FrontendDevCorsPolicy = "FrontendDev";
 builder.Services.AddCors(options =>
@@ -71,6 +84,13 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<RetroBoardHub>("/hubs/retro-board");
+app.MapPost(
+    "/api/messages",
+    async (HttpRequest request, HttpResponse response, IBotFrameworkHttpAdapter adapter, IBot bot, CancellationToken cancellationToken) =>
+    {
+        await adapter.ProcessAsync(request, response, bot, cancellationToken);
+    }
+);
 
 app.Run();
 

@@ -19,6 +19,10 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
 
     public DbSet<Vote> Votes => Set<Vote>();
 
+    public DbSet<PollUtilite> PollsUtilite => Set<PollUtilite>();
+
+    public DbSet<VoteUtilite> VotesUtilite => Set<VoteUtilite>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Equipe>(entity =>
@@ -104,6 +108,28 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
                 .HasOne(e => e.Participant)
                 .WithMany()
                 .HasForeignKey(e => e.ParticipantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PollUtilite>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity
+                .HasOne(e => e.Equipe)
+                .WithMany()
+                .HasForeignKey(e => e.AreaPath)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.AreaPath, e.TypeReunion, e.Date }).IsUnique();
+        });
+
+        modelBuilder.Entity<VoteUtilite>(entity =>
+        {
+            entity.HasKey(e => new { e.PollId, e.TeamsUserId });
+            entity.Property(e => e.NomAffiche).IsRequired();
+            entity
+                .HasOne(e => e.Poll)
+                .WithMany(p => p.Votes)
+                .HasForeignKey(e => e.PollId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
