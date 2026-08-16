@@ -8,3 +8,6 @@ public class DomainNotFoundException(string message) : Exception(message);
 
 /// <summary>Action refusée pour l'appelant (ex : non-auteur, non-facilitateur) — correspond à un 403.</summary>
 public class DomainForbiddenException(string message) : Exception(message);
+
+/// <summary>Échec d'un appel à un service externe (ex : Azure DevOps injoignable) — correspond à un 502.</summary>
+public class DomainUpstreamException(string message) : Exception(message);

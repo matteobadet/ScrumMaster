@@ -13,6 +13,7 @@ interface PostItProps {
   onMove: (colonneId: string) => void;
   onVote: () => void;
   onRemoveVote: () => void;
+  onExport?: () => void;
 }
 
 export function PostIt({
@@ -26,6 +27,7 @@ export function PostIt({
   onMove,
   onVote,
   onRemoveVote,
+  onExport,
 }: PostItProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(postIt.texte);
@@ -63,6 +65,7 @@ export function PostIt({
         <>
           <p>{postIt.texte}</p>
           <p className="post-it-meta">{postIt.auteur}</p>
+          {postIt.workItemExporteId && <p className="post-it-exporte">Exporté (#{postIt.workItemExporteId})</p>}
           <VoteCounter
             nombreVotes={postIt.nombreVotes}
             aVote={postIt.voteDuParticipant}
@@ -95,6 +98,11 @@ export function PostIt({
                 Supprimer
               </button>
             </>
+          )}
+          {!readOnly && onExport && !postIt.workItemExporteId && (
+            <button type="button" onClick={onExport}>
+              Exporter vers Azure DevOps
+            </button>
           )}
         </>
       )}

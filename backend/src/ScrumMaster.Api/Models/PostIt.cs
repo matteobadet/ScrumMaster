@@ -22,5 +22,11 @@ public class PostIt
 
     public DateTimeOffset DateModification { get; set; }
 
+    /// <summary>Id du work item Azure DevOps d'origine si ce post-it a été importé (specs/005-azure-devops-boards).</summary>
+    public int? WorkItemSourceId { get; set; }
+
+    /// <summary>Id du work item Azure DevOps créé si ce post-it a été exporté (specs/005-azure-devops-boards).</summary>
+    public int? WorkItemExporteId { get; set; }
+
     public List<Vote> Votes { get; set; } = new();
 }

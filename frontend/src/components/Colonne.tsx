@@ -15,6 +15,7 @@ interface ColonneProps {
   onMovePostIt: (postItId: string, colonneId: string) => void;
   onVotePostIt: (postItId: string) => void;
   onRemoveVotePostIt: (postItId: string) => void;
+  onExportPostIt?: (postItId: string) => void;
 }
 
 export function Colonne({
@@ -30,6 +31,7 @@ export function Colonne({
   onMovePostIt,
   onVotePostIt,
   onRemoveVotePostIt,
+  onExportPostIt,
 }: ColonneProps) {
   const [nouveauTexte, setNouveauTexte] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +64,7 @@ export function Colonne({
             onMove={(colonneId) => onMovePostIt(postIt.id, colonneId)}
             onVote={() => onVotePostIt(postIt.id)}
             onRemoveVote={() => onRemoveVotePostIt(postIt.id)}
+            onExport={onExportPostIt ? () => onExportPostIt(postIt.id) : undefined}
           />
         ))}
       </div>

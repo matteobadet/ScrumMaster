@@ -1,9 +1,14 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ScrumMaster.Api.Models;
 
 namespace ScrumMaster.Api.Data;
 
-public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options) : DbContext(options)
+/// <summary>
+/// Implémente <see cref="IDataProtectionKeyContext"/> pour persister l'anneau de clés Data
+/// Protection (chiffrement du PAT Azure DevOps, specs/005-azure-devops-boards/research.md#2).
+/// </summary>
+public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options) : DbContext(options), IDataProtectionKeyContext
 {
     public DbSet<Equipe> Equipes => Set<Equipe>();
 
@@ -24,6 +29,10 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
     public DbSet<VoteUtilite> VotesUtilite => Set<VoteUtilite>();
 
     public DbSet<RappelEnvoye> RappelsEnvoyes => Set<RappelEnvoye>();
+
+    public DbSet<ConfigurationAzureDevOps> ConfigurationsAzureDevOps => Set<ConfigurationAzureDevOps>();
+
+    public DbSet<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey> DataProtectionKeys { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -144,6 +153,19 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
                 .HasForeignKey(e => e.AreaPath)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(e => new { e.AreaPath, e.TypeReunion, e.Date }).IsUnique();
+        });
+
+        modelBuilder.Entity<ConfigurationAzureDevOps>(entity =>
+        {
+            entity.HasKey(e => e.AreaPath);
+            entity.Property(e => e.Organisation).IsRequired();
+            entity.Property(e => e.Projet).IsRequired();
+            entity.Property(e => e.PatChiffre).IsRequired();
+            entity
+                .HasOne(e => e.Equipe)
+                .WithOne()
+                .HasForeignKey<ConfigurationAzureDevOps>(e => e.AreaPath)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

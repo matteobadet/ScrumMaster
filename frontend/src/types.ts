@@ -59,6 +59,7 @@ export interface PostItState {
   auteurParticipantId: string;
   nombreVotes: number;
   voteDuParticipant: boolean;
+  workItemExporteId: number | null;
 }
 
 export interface ParticipantState {
@@ -85,4 +86,25 @@ export interface CurrentParticipant {
   participantId: string;
   nomAffiche: string;
   role: 'Facilitateur' | 'Participant';
+}
+
+export interface AzureDevOpsConfigRequest {
+  organisation: string;
+  projet: string;
+  pat: string;
+}
+
+export interface AzureDevOpsConfigResponse {
+  areaPath: string;
+  organisation: string;
+  projet: string;
+}
+
+export interface EquipeAzureDevOps {
+  areaPath: string;
+}
+
+export interface IterationAzureDevOps {
+  cheminIteration: string;
+  enCours: boolean;
 }

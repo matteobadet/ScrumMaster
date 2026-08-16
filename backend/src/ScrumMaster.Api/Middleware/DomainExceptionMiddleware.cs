@@ -24,6 +24,10 @@ public class DomainExceptionMiddleware(RequestDelegate next)
         {
             await WriteProblemAsync(context, HttpStatusCode.Forbidden, ex.Message);
         }
+        catch (DomainUpstreamException ex)
+        {
+            await WriteProblemAsync(context, HttpStatusCode.BadGateway, ex.Message);
+        }
     }
 
     private static Task WriteProblemAsync(HttpContext context, HttpStatusCode status, string message)

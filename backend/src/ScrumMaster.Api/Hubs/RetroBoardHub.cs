@@ -14,7 +14,8 @@ public class RetroBoardHub(
     ScrumMasterDbContext db,
     PostItService postItService,
     VoteService voteService,
-    BoardService boardService
+    BoardService boardService,
+    AzureDevOpsBoardService azureDevOpsBoardService
 ) : Hub
 {
     public async Task JoinBoard(Guid boardId, Guid participantId)
@@ -143,6 +144,7 @@ public class RetroBoardHub(
                         auteur = result.Auteur,
                         auteurParticipantId = result.AuteurParticipantId,
                         nombreVotes = 0,
+                        workItemExporteId = (int?)null,
                     },
                 }
             );
@@ -177,6 +179,46 @@ public class RetroBoardHub(
         await Clients.Group(boardId.ToString()).SendAsync("PostItDeleted", new { postItId });
     }
 
+    public async Task ImportWorkItems(Guid boardId)
+    {
+        var callerId = await ResolveCallerParticipantIdAsync(boardId);
+
+        var importes = await RunOrThrowHubExceptionAsync(() => azureDevOpsBoardService.ImporterWorkItemsAsync(boardId, callerId));
+
+        foreach (var postIt in importes)
+        {
+            await Clients
+                .Group(boardId.ToString())
+                .SendAsync(
+                    "PostItAdded",
+                    new
+                    {
+                        postIt = new
+                        {
+                            id = postIt.Id,
+                            colonneId = postIt.ColonneId,
+                            texte = postIt.Texte,
+                            auteur = postIt.Auteur,
+                            auteurParticipantId = postIt.AuteurParticipantId,
+                            nombreVotes = 0,
+                            workItemExporteId = (int?)null,
+                        },
+                    }
+                );
+        }
+    }
+
+    public async Task ExportPostIt(Guid boardId, Guid postItId)
+    {
+        var callerId = await ResolveCallerParticipantIdAsync(boardId);
+
+        var result = await RunOrThrowHubExceptionAsync(() => azureDevOpsBoardService.ExporterPostItAsync(boardId, callerId, postItId));
+
+        await Clients
+            .Group(boardId.ToString())
+            .SendAsync("PostItExported", new { postItId = result.PostItId, workItemId = result.WorkItemId });
+    }
+
     private async Task<Guid> ResolveCallerParticipantIdAsync(Guid boardId)
     {
         var participant = await db.Participants.FirstOrDefaultAsync(p =>
@@ -196,7 +238,8 @@ public class RetroBoardHub(
         {
             return await action();
         }
-        catch (Exception ex) when (ex is DomainValidationException or DomainNotFoundException or DomainForbiddenException)
+        catch (Exception ex)
+            when (ex is DomainValidationException or DomainNotFoundException or DomainForbiddenException or DomainUpstreamException)
         {
             throw new HubException(ex.Message);
         }
@@ -208,7 +251,8 @@ public class RetroBoardHub(
         {
             await action();
         }
-        catch (Exception ex) when (ex is DomainValidationException or DomainNotFoundException or DomainForbiddenException)
+        catch (Exception ex)
+            when (ex is DomainValidationException or DomainNotFoundException or DomainForbiddenException or DomainUpstreamException)
         {
             throw new HubException(ex.Message);
         }

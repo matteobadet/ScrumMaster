@@ -35,6 +35,8 @@ export const apiClient = {
   get: <TResponse>(path: string) => request<TResponse>(path, { method: 'GET' }),
   post: <TResponse>(path: string, body: unknown) =>
     request<TResponse>(path, { method: 'POST', body: JSON.stringify(body) }),
+  put: <TResponse>(path: string, body: unknown) =>
+    request<TResponse>(path, { method: 'PUT', body: JSON.stringify(body) }),
 };
 
 export { API_BASE_URL };

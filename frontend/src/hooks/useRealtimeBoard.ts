@@ -22,6 +22,11 @@ interface PostItDeletedEvent {
   postItId: string;
 }
 
+interface PostItExportedEvent {
+  postItId: string;
+  workItemId: number;
+}
+
 interface ParticipantJoinedEvent {
   participantId: string;
   nomAffiche: string;
@@ -109,6 +114,19 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
       connection.on('PostItDeleted', ({ postItId }: PostItDeletedEvent) => {
         setBoard((current) =>
           current ? { ...current, postIts: current.postIts.filter((p) => p.id !== postItId) } : current,
+        );
+      });
+
+      connection.on('PostItExported', ({ postItId, workItemId }: PostItExportedEvent) => {
+        setBoard((current) =>
+          current
+            ? {
+                ...current,
+                postIts: current.postIts.map((p) =>
+                  p.id === postItId ? { ...p, workItemExporteId: workItemId } : p,
+                ),
+              }
+            : current,
         );
       });
 

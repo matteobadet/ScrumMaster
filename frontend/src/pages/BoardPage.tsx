@@ -118,6 +118,12 @@ export function BoardPage() {
           <button type="button" onClick={closeBoard}>
             Clôturer le board
           </button>
+          <button type="button" onClick={() => invoke('ImportWorkItems', boardId)}>
+            Importer les work items
+          </button>
+          <p>
+            <Link to={`/equipe/${board.areaPath}/azure-devops`}>Configurer l'accès Azure DevOps de l'équipe</Link>
+          </p>
         </>
       )}
 
@@ -137,6 +143,7 @@ export function BoardPage() {
             onMovePostIt={(postItId, colonneId) => invoke('MovePostIt', boardId, postItId, colonneId)}
             onVotePostIt={(postItId) => invoke('Vote', boardId, postItId)}
             onRemoveVotePostIt={(postItId) => invoke('RemoveVote', boardId, postItId)}
+            onExportPostIt={participant.role === 'Facilitateur' ? (postItId) => invoke('ExportPostIt', boardId, postItId) : undefined}
           />
         ))}
       </div>

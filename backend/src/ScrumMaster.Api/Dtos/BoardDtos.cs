@@ -26,7 +26,8 @@ public record PostItDto(
     string Auteur,
     Guid AuteurParticipantId,
     int NombreVotes,
-    bool VoteDuParticipant
+    bool VoteDuParticipant,
+    int? WorkItemExporteId
 );
 
 public record ParticipantDto(Guid Id, string NomAffiche, string Role);

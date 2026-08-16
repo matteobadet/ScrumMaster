@@ -1,8 +1,12 @@
 import { apiClient } from './apiClient';
 import type {
+  AzureDevOpsConfigRequest,
+  AzureDevOpsConfigResponse,
   BoardState,
   CreateBoardRequest,
   CreateBoardResponse,
+  EquipeAzureDevOps,
+  IterationAzureDevOps,
   JoinBoardResponse,
   ThemeSummary,
 } from '../types';
@@ -17,4 +21,9 @@ export const boardsApi = {
     ),
   joinBoard: (boardId: string, nomAffiche: string) =>
     apiClient.post<JoinBoardResponse>(`/api/boards/${boardId}/participants`, { nomAffiche }),
+  configurerAzureDevOps: (areaPath: string, request: AzureDevOpsConfigRequest) =>
+    apiClient.put<AzureDevOpsConfigResponse>(`/api/equipes/${areaPath}/azure-devops-config`, request),
+  listerEquipesAvecAzureDevOps: () => apiClient.get<EquipeAzureDevOps[]>('/api/equipes/avec-azure-devops'),
+  obtenirIterationsAzureDevOps: (areaPath: string) =>
+    apiClient.get<IterationAzureDevOps[]>(`/api/equipes/${areaPath}/azure-devops/iterations`),
 };

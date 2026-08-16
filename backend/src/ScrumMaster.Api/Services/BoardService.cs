@@ -104,7 +104,8 @@ public class BoardService(ScrumMasterDbContext db)
                     p.Auteur?.NomAffiche ?? string.Empty,
                     p.AuteurParticipantId,
                     p.Votes.Count,
-                    asParticipantId is { } pid && p.Votes.Any(v => v.ParticipantId == pid)
+                    asParticipantId is { } pid && p.Votes.Any(v => v.ParticipantId == pid),
+                    p.WorkItemExporteId
                 ))
                 .ToList(),
             board.Participants.Select(p => new ParticipantDto(p.Id, p.NomAffiche, p.Role.ToString())).ToList()

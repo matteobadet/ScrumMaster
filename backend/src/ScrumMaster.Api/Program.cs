@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.EntityFrameworkCore;
+using ScrumMaster.Api.AzureDevOps;
 using ScrumMaster.Api.Bots;
 using ScrumMaster.Api.Cards;
 using ScrumMaster.Api.Data;
@@ -29,6 +31,14 @@ builder.Services.AddScoped<VoteService>();
 builder.Services.AddScoped<PollService>();
 builder.Services.AddScoped<RappelService>();
 builder.Services.AddSingleton<PollCardBuilder>();
+
+// Azure DevOps (specs/005-azure-devops-boards) — le PAT est chiffré via Data Protection avant
+// stockage ; l'anneau de clés est persisté dans PostgreSQL (research.md#2) pour survivre aux
+// redémarrages de pod et être partagé entre réplicas sur k3s.
+builder.Services.AddDataProtection().PersistKeysToDbContext<ScrumMasterDbContext>();
+builder.Services.AddHttpClient<AzureDevOpsClient>();
+builder.Services.AddScoped<AzureDevOpsConfigService>();
+builder.Services.AddScoped<AzureDevOpsBoardService>();
 
 // Bot Framework (specs/002-poll-utilite-reunion) — identifiants via
 // MicrosoftAppId/MicrosoftAppPassword/MicrosoftAppTenantId (appsettings / Secret Kubernetes).
