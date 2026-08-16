@@ -111,6 +111,53 @@ public class BoardService(ScrumMasterDbContext db)
         );
     }
 
+    public async Task<ChangeThemeResult> ChangeThemeAsync(
+        Guid boardId,
+        Guid callerParticipantId,
+        Guid? themeId,
+        ThemePersonnaliseDto? themePersonnalise
+    )
+    {
+        var board = await db.Boards.FirstOrDefaultAsync(b => b.Id == boardId);
+        if (board is null)
+        {
+            throw new DomainNotFoundException($"Board {boardId} introuvable.");
+        }
+
+        var caller = await db.Participants.FirstOrDefaultAsync(p => p.Id == callerParticipantId && p.BoardId == boardId);
+        if (caller is null)
+        {
+            throw new DomainNotFoundException($"Participant {callerParticipantId} introuvable sur ce board.");
+        }
+
+        if (caller.Role != ParticipantRole.Facilitateur)
+        {
+            throw new DomainForbiddenException("Seul le facilitateur peut changer le thème du board.");
+        }
+
+        var theme = await ResolveThemeAsync(themeId, themePersonnalise);
+        db.Themes.Add(theme);
+        board.ThemeId = theme.Id;
+
+        // ChangeTheme crée toujours de nouvelles colonnes (même pour un thème prédéfini copié) :
+        // les post-its existants doivent être réaffectés pour ne pas devenir orphelins et
+        // disparaître silencieusement de l'affichage.
+        var premiereColonne = theme.Colonnes.OrderBy(c => c.Ordre).First();
+        var postItsExistants = await db.PostIts.Where(p => p.BoardId == boardId).ToListAsync();
+        foreach (var postIt in postItsExistants)
+        {
+            postIt.ColonneId = premiereColonne.Id;
+        }
+
+        await db.SaveChangesAsync();
+
+        return new ChangeThemeResult(
+            theme.Id,
+            theme.Nom,
+            theme.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre)).ToList()
+        );
+    }
+
     private async Task<Theme> ResolveThemeAsync(Guid? themeId, ThemePersonnaliseDto? themePersonnalise)
     {
         if (themeId is { } id)

@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { boardsApi } from '../services/boardsApi';
 import { participantStorage } from '../services/participantStorage';
 import { ApiError } from '../services/apiClient';
-import type { ThemeSummary } from '../types';
+import { ThemeEditor } from '../components/ThemeEditor';
+import type { ThemeSelection, ThemeSummary } from '../types';
 
 export function CreateBoardPage() {
   const navigate = useNavigate();
   const [themes, setThemes] = useState<ThemeSummary[]>([]);
   const [areaPath, setAreaPath] = useState('');
   const [iteration, setIteration] = useState('');
-  const [themeId, setThemeId] = useState<string>('');
+  const [themeSelection, setThemeSelection] = useState<ThemeSelection>({ kind: 'predefined', themeId: '' });
   const [nomAffiche, setNomAffiche] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -18,21 +19,42 @@ export function CreateBoardPage() {
   useEffect(() => {
     boardsApi
       .getThemes()
-      .then(setThemes)
+      .then((loaded) => {
+        setThemes(loaded);
+        if (loaded.length > 0) {
+          setThemeSelection((current) =>
+            current.kind === 'predefined' && !current.themeId
+              ? { kind: 'predefined', themeId: loaded[0].id }
+              : current,
+          );
+        }
+      })
       .catch(() => setThemes([]));
   }, []);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setSubmitting(true);
 
+    let colonnesNonVides: string[] = [];
+    if (themeSelection.kind === 'custom') {
+      colonnesNonVides = themeSelection.colonnes.map((c) => c.trim()).filter(Boolean);
+      if (colonnesNonVides.length === 0) {
+        setError('Un thème personnalisé doit comporter au moins une colonne.');
+        return;
+      }
+    }
+
+    setSubmitting(true);
     try {
       const response = await boardsApi.createBoard({
         areaPath,
         iteration,
-        themeId: themeId || null,
-        themePersonnalise: null,
+        themeId: themeSelection.kind === 'predefined' ? themeSelection.themeId || null : null,
+        themePersonnalise:
+          themeSelection.kind === 'custom'
+            ? { nom: themeSelection.nom || 'Thème personnalisé', colonnes: colonnesNonVides }
+            : null,
         maxVotesParParticipant: null,
         nomAffiche,
       });
@@ -68,17 +90,7 @@ export function CreateBoardPage() {
             required
           />
         </label>
-        <label>
-          Thème
-          <select value={themeId} onChange={(e) => setThemeId(e.target.value)}>
-            <option value="">Thème par défaut</option>
-            {themes.map((theme) => (
-              <option key={theme.id} value={theme.id}>
-                {theme.nom}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ThemeEditor themes={themes} value={themeSelection} onChange={setThemeSelection} />
         <label>
           Votre nom
           <input value={nomAffiche} onChange={(e) => setNomAffiche(e.target.value)} required />

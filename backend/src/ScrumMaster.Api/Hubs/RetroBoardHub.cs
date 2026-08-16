@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using ScrumMaster.Api.Data;
+using ScrumMaster.Api.Dtos;
 using ScrumMaster.Api.Services;
 
 namespace ScrumMaster.Api.Hubs;
@@ -9,7 +10,12 @@ namespace ScrumMaster.Api.Hubs;
 /// Hub temps réel du board de rétrospective — un groupe SignalR par BoardId.
 /// Voir specs/001-retro-board-base/contracts/realtime-hub.md pour le contrat complet.
 /// </summary>
-public class RetroBoardHub(ScrumMasterDbContext db, PostItService postItService, VoteService voteService) : Hub
+public class RetroBoardHub(
+    ScrumMasterDbContext db,
+    PostItService postItService,
+    VoteService voteService,
+    BoardService boardService
+) : Hub
 {
     public async Task JoinBoard(Guid boardId, Guid participantId)
     {
@@ -78,6 +84,26 @@ public class RetroBoardHub(ScrumMasterDbContext db, PostItService postItService,
                     postItId = result.PostItId,
                     voteDuParticipant = false,
                     votesRestants = result.VotesRestants,
+                }
+            );
+    }
+
+    public async Task ChangeTheme(Guid boardId, Guid? themeId, ThemePersonnaliseDto? themePersonnalise)
+    {
+        var callerId = await ResolveCallerParticipantIdAsync(boardId);
+
+        var result = await RunOrThrowHubExceptionAsync(
+            () => boardService.ChangeThemeAsync(boardId, callerId, themeId, themePersonnalise)
+        );
+
+        await Clients
+            .Group(boardId.ToString())
+            .SendAsync(
+                "ThemeChanged",
+                new
+                {
+                    theme = new { id = result.ThemeId, nom = result.Nom },
+                    colonnes = result.Colonnes,
                 }
             );
     }

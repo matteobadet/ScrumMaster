@@ -132,6 +132,16 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
         );
       });
 
+      connection.on('ThemeChanged', () => {
+        // Le nouveau thème porte de nouvelles colonnes (et les post-its existants ont été
+        // réaffectés côté serveur) : une resynchronisation complète est plus sûre qu'un patch.
+        resync().catch(() => {
+          if (!cancelled) {
+            setError('Le thème a changé mais la resynchronisation a échoué.');
+          }
+        });
+      });
+
       connection.on('ParticipantJoined', ({ participantId: id, nomAffiche, role }: ParticipantJoinedEvent) => {
         setBoard((current) => {
           if (!current || current.participants.some((p) => p.id === id)) {

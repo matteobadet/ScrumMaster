@@ -9,6 +9,10 @@ export interface ThemePersonnalise {
   colonnes: string[];
 }
 
+export type ThemeSelection =
+  | { kind: 'predefined'; themeId: string }
+  | { kind: 'custom'; nom: string; colonnes: string[] };
+
 export interface CreateBoardRequest {
   areaPath: string;
   iteration: string;

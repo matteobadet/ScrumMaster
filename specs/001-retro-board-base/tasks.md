@@ -207,23 +207,31 @@ affichées correspondent exactement à celles définies.
 
 ### Tests for User Story 4
 
-- [ ] T046 [P] [US4] Test d'intégration : `ChangeTheme` est refusé pour un non-facilitateur et
+- [X] T046 [P] [US4] Test d'intégration : `ChangeTheme` est refusé pour un non-facilitateur et
       pour un thème sans colonne (FR-013, FR-015) dans
-      `backend/tests/ScrumMaster.Api.Tests/ThemeChangeTests.cs`
+      `backend/tests/ScrumMaster.Api.Tests/ThemeChangeTests.cs`. Complété par un test vérifiant
+      que les post-its existants survivent au changement de thème (voir note T047).
 
 ### Implementation for User Story 4
 
-- [ ] T047 [US4] Étendre `BoardService` avec `ChangeTheme` (contrôle rôle facilitateur,
+- [X] T047 [US4] Étendre `BoardService` avec `ChangeTheme` (contrôle rôle facilitateur,
       validation ≥1 colonne) dans `backend/src/ScrumMaster.Api/Services/BoardService.cs` (dépend
-      de T025)
-- [ ] T048 [US4] Implémenter `ChangeTheme` et la diffusion `ThemeChanged` dans
+      de T025). `ChangeTheme` crée toujours de nouvelles colonnes (même pour un thème prédéfini
+      copié) ; les post-its existants sont réaffectés à la première colonne du nouveau thème pour
+      éviter qu'ils ne deviennent orphelins et disparaissent silencieusement — comportement non
+      spécifié explicitement par les acceptance scenarios (centrés sur la création), ajouté pour
+      éviter une perte de contenu perçue.
+- [X] T048 [US4] Implémenter `ChangeTheme` et la diffusion `ThemeChanged` dans
       `backend/src/ScrumMaster.Api/Hubs/RetroBoardHub.cs` (dépend de T029, T047)
-- [ ] T049 [US4] Étendre `POST /api/boards` pour accepter un thème personnalisé
+- [X] T049 [US4] Étendre `POST /api/boards` pour accepter un thème personnalisé
       (`themePersonnalise`) dans
-      `backend/src/ScrumMaster.Api/Controllers/BoardsController.cs` (dépend de T026, T047)
-- [ ] T050 [US4] Implémenter `ThemeEditor` (choix d'un thème prédéfini ou colonnes personnalisées)
-      dans `frontend/src/components/ThemeEditor.tsx` (dépend de T030)
-- [ ] T051 [US4] Intégrer le contrôle de changement de thème (visible facilitateur uniquement)
+      `backend/src/ScrumMaster.Api/Controllers/BoardsController.cs` (dépend de T026, T047). Déjà
+      implémenté lors de T025 (US1) via `BoardService.ResolveThemeAsync` ; aucun changement
+      supplémentaire nécessaire.
+- [X] T050 [US4] Implémenter `ThemeEditor` (choix d'un thème prédéfini ou colonnes personnalisées)
+      dans `frontend/src/components/ThemeEditor.tsx` (dépend de T030). Intégré dans
+      `CreateBoardPage` (remplace le simple menu déroulant).
+- [X] T051 [US4] Intégrer le contrôle de changement de thème (visible facilitateur uniquement)
       dans `BoardPage` dans `frontend/src/pages/BoardPage.tsx` (dépend de T031, T048, T050)
 
 **Checkpoint**: Les 4 user stories sont fonctionnelles.

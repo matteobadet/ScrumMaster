@@ -31,6 +31,10 @@ public record PostItDto(
 
 public record ParticipantDto(Guid Id, string NomAffiche, string Role);
 
+public record ChangeThemeRequest(Guid? ThemeId, ThemePersonnaliseDto? ThemePersonnalise);
+
+public record ChangeThemeResult(Guid ThemeId, string Nom, IReadOnlyList<ColonneDto> Colonnes);
+
 public record BoardStateDto(
     Guid BoardId,
     string AreaPath,
