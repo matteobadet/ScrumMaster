@@ -8,6 +8,10 @@ public record PollDeclencheResult(Guid PollId, TypeReunion TypeReunion);
 
 public record VoteUtiliteResult(Guid PollId, TypeReunion TypeReunion, int NombreUtile, int NombrePasNecessaire);
 
+public record VoteDetail(string NomAffiche, ReponseVote Reponse);
+
+public record PollClotureResult(Guid PollId, TypeReunion TypeReunion, bool ReunionMaintenue, IReadOnlyList<VoteDetail> Votes);
+
 /// <summary>
 /// Association channel/équipe, déclenchement, vote et clôture des polls d'utilité — voir
 /// specs/002-poll-utilite-reunion. Implémenté progressivement par les User Stories 1 à 3.
@@ -118,6 +122,41 @@ public class PollService(ScrumMasterDbContext db)
             poll.TypeReunion,
             votes.Count(v => v.Reponse == ReponseVote.Utile),
             votes.Count(v => v.Reponse == ReponseVote.PasNecessaire)
+        );
+    }
+
+    /// <summary>Clôture le poll ouvert du jour et calcule le résultat (FR-004, FR-009).</summary>
+    public async Task<PollClotureResult> CloturerAsync(string teamsChannelId, TypeReunion typeReunion)
+    {
+        var equipe = await db.Equipes.FirstOrDefaultAsync(e => e.TeamsChannelId == teamsChannelId);
+        if (equipe is null)
+        {
+            throw new DomainValidationException(
+                "Ce channel n'est associé à aucune équipe. Utilisez d'abord \"associer <area-path>\"."
+            );
+        }
+
+        var aujourdhui = DateOnly.FromDateTime(DateTime.UtcNow);
+        var poll = await db.PollsUtilite.FirstOrDefaultAsync(p =>
+            p.AreaPath == equipe.AreaPath && p.TypeReunion == typeReunion && p.Date == aujourdhui && p.Statut == StatutPoll.Ouvert
+        );
+        if (poll is null)
+        {
+            throw new DomainValidationException("Aucun poll ouvert pour cette réunion aujourd'hui.");
+        }
+
+        poll.Statut = StatutPoll.Cloture;
+        poll.DateCloture = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+
+        var votes = await db.VotesUtilite.Where(v => v.PollId == poll.Id).ToListAsync();
+        var reunionMaintenue = votes.Count == 0 || votes.Any(v => v.Reponse == ReponseVote.Utile);
+
+        return new PollClotureResult(
+            poll.Id,
+            poll.TypeReunion,
+            reunionMaintenue,
+            votes.Select(v => new VoteDetail(v.NomAffiche, v.Reponse)).ToList()
         );
     }
 }

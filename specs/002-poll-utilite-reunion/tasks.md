@@ -173,20 +173,21 @@ est cohérent avec la règle FR-009 ; clôturer un poll sans vote et vérifier l
 
 ### Tests for User Story 3
 
-- [ ] T023 [P] [US3] Test d'intégration : `clore <type>` clôt le poll ouvert, calcule le résultat
+- [X] T023 [P] [US3] Test d'intégration : `clore <type>` clôt le poll ouvert, calcule le résultat
       (maintenue si ≥1 vote "Utile", "pas nécessaire" sinon, maintenue par défaut si aucun vote —
       FR-009, Assumptions), et rejette si aucun poll n'est ouvert dans
-      `backend/tests/ScrumMaster.Api.Tests/PollClosureTests.cs`
+      `backend/tests/ScrumMaster.Api.Tests/PollClosureTests.cs`. Complété par un test vérifiant
+      qu'un vote après clôture reste rejeté (couvre déjà FR-008, en complément de PollVoteTests).
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Implémenter `PollService.CloturerAsync` (résolution du poll ouvert par
+- [X] T024 [US3] Implémenter `PollService.CloturerAsync` (résolution du poll ouvert par
       channel/type/jour, passage `Statut = Cloture`, calcul du résultat FR-009) dans
       `backend/src/ScrumMaster.Api/Services/PollService.cs` (dépend de T007)
-- [ ] T025 [US3] Implémenter `PollCardBuilder.BuildResultCard` (résultat, décompte détaillé par
+- [X] T025 [US3] Implémenter `PollCardBuilder.BuildResultCard` (résultat, décompte détaillé par
       votant avec son nom — FR-012) dans `backend/src/ScrumMaster.Api/Cards/PollCardBuilder.cs`
       (dépend de T012)
-- [ ] T026 [US3] Implémenter dans `RetroPollBot` le parsing de la commande
+- [X] T026 [US3] Implémenter dans `RetroPollBot` le parsing de la commande
       `clore <mêlée|rétro>`, l'appel à `PollService.CloturerAsync` et l'envoi de la carte de
       résultat dans `backend/src/ScrumMaster.Api/Bots/RetroPollBot.cs` (dépend de T015, T024,
       T025)

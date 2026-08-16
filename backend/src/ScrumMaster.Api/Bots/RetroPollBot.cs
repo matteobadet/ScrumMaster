@@ -33,6 +33,12 @@ public class RetroPollBot(PollService pollService, PollCardBuilder cardBuilder) 
             return;
         }
 
+        if (mots.Length >= 2 && mots[0].Equals("clore", StringComparison.OrdinalIgnoreCase))
+        {
+            await TraiterCloreAsync(turnContext, mots[1], cancellationToken);
+            return;
+        }
+
         await turnContext.SendActivityAsync(
             MessageFactory.Text(
                 "Commande non reconnue. Essayez : \"associer <area-path>\", \"sonder <mêlée|rétro>\", \"clore <mêlée|rétro>\"."
@@ -73,6 +79,30 @@ public class RetroPollBot(PollService pollService, PollCardBuilder cardBuilder) 
         {
             var result = await pollService.DeclencherPollAsync(turnContext.Activity.Conversation.Id, typeReunion.Value);
             var carte = cardBuilder.BuildPollCard(result.PollId, result.TypeReunion, nombreUtile: 0, nombrePasNecessaire: 0);
+            await turnContext.SendActivityAsync(MessageFactory.Attachment(carte), cancellationToken);
+        }
+        catch (DomainValidationException ex)
+        {
+            await turnContext.SendActivityAsync(MessageFactory.Text(ex.Message), cancellationToken);
+        }
+    }
+
+    private async Task TraiterCloreAsync(ITurnContext turnContext, string typeMot, CancellationToken cancellationToken)
+    {
+        var typeReunion = ParserTypeReunion(typeMot);
+        if (typeReunion is null)
+        {
+            await turnContext.SendActivityAsync(
+                MessageFactory.Text("Type de réunion non reconnu. Utilisez \"mêlée\" ou \"rétro\"."),
+                cancellationToken
+            );
+            return;
+        }
+
+        try
+        {
+            var result = await pollService.CloturerAsync(turnContext.Activity.Conversation.Id, typeReunion.Value);
+            var carte = cardBuilder.BuildResultCard(result.TypeReunion, result.ReunionMaintenue, result.Votes);
             await turnContext.SendActivityAsync(MessageFactory.Attachment(carte), cancellationToken);
         }
         catch (DomainValidationException ex)

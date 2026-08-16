@@ -3,6 +3,7 @@ using Microsoft.Bot.Schema;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ScrumMaster.Api.Models;
+using ScrumMaster.Api.Services;
 
 namespace ScrumMaster.Api.Cards;
 
@@ -45,6 +46,40 @@ public class PollCardBuilder
             Verb = "vote",
             Data = JObject.FromObject(new { action = "vote", pollId, reponse = reponse.ToString() }),
         };
+
+    public Attachment BuildResultCard(TypeReunion typeReunion, bool reunionMaintenue, IReadOnlyList<VoteDetail> votes) =>
+        ToAttachment(BuildResultCardObject(typeReunion, reunionMaintenue, votes));
+
+    private static AdaptiveCard BuildResultCardObject(TypeReunion typeReunion, bool reunionMaintenue, IReadOnlyList<VoteDetail> votes)
+    {
+        var resultat = reunionMaintenue ? "maintenue" : "pas nécessaire";
+        var card = new AdaptiveCard(new AdaptiveSchemaVersion(1, 4))
+        {
+            Body =
+            {
+                new AdaptiveTextBlock($"{Libelle(typeReunion)} du jour : {resultat}")
+                {
+                    Weight = AdaptiveTextWeight.Bolder,
+                    Size = AdaptiveTextSize.Medium,
+                },
+            },
+        };
+
+        if (votes.Count == 0)
+        {
+            card.Body.Add(new AdaptiveTextBlock("Aucun vote reçu.") { Wrap = true });
+        }
+        else
+        {
+            foreach (var vote in votes)
+            {
+                var reponse = vote.Reponse == ReponseVote.Utile ? "Utile" : "Pas nécessaire";
+                card.Body.Add(new AdaptiveTextBlock($"{vote.NomAffiche} : {reponse}") { Wrap = true });
+            }
+        }
+
+        return card;
+    }
 
     private static Attachment ToAttachment(AdaptiveCard card) =>
         new() { ContentType = AdaptiveCard.ContentType, Content = JsonConvert.DeserializeObject(card.ToJson()) };
