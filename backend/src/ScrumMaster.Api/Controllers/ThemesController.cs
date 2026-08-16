@@ -15,7 +15,13 @@ public class ThemesController(ScrumMasterDbContext db) : ControllerBase
         var themes = await db.Themes.Include(t => t.Colonnes).Where(t => t.EstPredefini).ToListAsync();
 
         var result = themes
-            .Select(t => new ThemeSummaryDto(t.Id, t.Nom, t.Colonnes.OrderBy(c => c.Ordre).Select(c => c.Intitule).ToList()))
+            .Select(t => new ThemeSummaryDto(
+                t.Id,
+                t.Nom,
+                t.Icone,
+                t.Contexte,
+                t.Colonnes.OrderBy(c => c.Ordre).Select(c => c.Intitule).ToList()
+            ))
             .ToList();
 
         return Ok(result);

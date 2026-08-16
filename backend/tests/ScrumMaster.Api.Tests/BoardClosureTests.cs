@@ -96,7 +96,7 @@ public class BoardClosureTests : IClassFixture<TestWebApplicationFactory>
             "DeletePostIt" => connection.InvokeAsync(methode, boardId, postItId),
             "Vote" => connection.InvokeAsync(methode, boardId, postItId),
             "RemoveVote" => connection.InvokeAsync(methode, boardId, postItId),
-            "ChangeTheme" => connection.InvokeAsync(methode, boardId, null, new ThemePersonnaliseDto("X", ["A"])),
+            "ChangeTheme" => connection.InvokeAsync(methode, boardId, null, new ThemePersonnaliseDto("X", null, null, ["A"])),
             _ => throw new InvalidOperationException(),
         };
 

@@ -93,7 +93,7 @@ public class BoardService(ScrumMasterDbContext db)
             board.Statut.ToString(),
             board.MaxVotesParParticipant,
             mesVotesRestants,
-            new ThemeRefDto(board.Theme.Id, board.Theme.Nom),
+            new ThemeRefDto(board.Theme.Id, board.Theme.Nom, board.Theme.Icone, board.Theme.Contexte),
             colonnes.Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre)).ToList(),
             board
                 .PostIts.OrderBy(p => p.DateCreation)
@@ -156,6 +156,8 @@ public class BoardService(ScrumMasterDbContext db)
         return new ChangeThemeResult(
             theme.Id,
             theme.Nom,
+            theme.Icone,
+            theme.Contexte,
             theme.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre)).ToList()
         );
     }
@@ -198,7 +200,7 @@ public class BoardService(ScrumMasterDbContext db)
                 throw new DomainValidationException($"Thème {id} introuvable.");
             }
 
-            return CopyTheme(source.Nom, source.Colonnes.OrderBy(c => c.Ordre).Select(c => c.Intitule));
+            return CopyTheme(source.Nom, source.Icone, source.Contexte, source.Colonnes.OrderBy(c => c.Ordre).Select(c => c.Intitule));
         }
 
         if (themePersonnalise is not null)
@@ -209,7 +211,17 @@ public class BoardService(ScrumMasterDbContext db)
                 throw new DomainValidationException("Un thème doit comporter au moins une colonne.");
             }
 
-            return CopyTheme(themePersonnalise.Nom, colonnes);
+            if (themePersonnalise.Icone?.Length > 50)
+            {
+                throw new DomainValidationException("L'icône du thème ne doit pas dépasser 50 caractères.");
+            }
+
+            if (themePersonnalise.Contexte?.Length > 500)
+            {
+                throw new DomainValidationException("Le contexte du thème ne doit pas dépasser 500 caractères.");
+            }
+
+            return CopyTheme(themePersonnalise.Nom, themePersonnalise.Icone, themePersonnalise.Contexte, colonnes);
         }
 
         var defaut = await db.Themes.Include(t => t.Colonnes).FirstOrDefaultAsync(t => t.EstParDefaut);
@@ -218,15 +230,17 @@ public class BoardService(ScrumMasterDbContext db)
             throw new DomainValidationException("Aucun thème par défaut n'est configuré.");
         }
 
-        return CopyTheme(defaut.Nom, defaut.Colonnes.OrderBy(c => c.Ordre).Select(c => c.Intitule));
+        return CopyTheme(defaut.Nom, defaut.Icone, defaut.Contexte, defaut.Colonnes.OrderBy(c => c.Ordre).Select(c => c.Intitule));
     }
 
-    private static Theme CopyTheme(string nom, IEnumerable<string> colonnes)
+    private static Theme CopyTheme(string nom, string? icone, string? contexte, IEnumerable<string> colonnes)
     {
         var theme = new Theme
         {
             Id = Guid.NewGuid(),
             Nom = nom,
+            Icone = icone,
+            Contexte = contexte,
             EstPredefini = false,
             EstParDefaut = false,
         };

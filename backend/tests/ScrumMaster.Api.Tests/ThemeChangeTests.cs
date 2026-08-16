@@ -31,7 +31,7 @@ public class ThemeChangeTests : IClassFixture<TestWebApplicationFactory>
         var tcs = new TaskCompletionSource<ThemeChangedEnvelope>(TaskCreationOptions.RunContinuationsAsynchronously);
         using var sub = connection.On<ThemeChangedEnvelope>("ThemeChanged", e => tcs.TrySetResult(e));
 
-        var themePersonnalise = new ThemePersonnaliseDto("Mon thème", ["Continuer", "Arrêter", "Essayer"]);
+        var themePersonnalise = new ThemePersonnaliseDto("Mon thème", null, null, ["Continuer", "Arrêter", "Essayer"]);
         await connection.InvokeAsync("ChangeTheme", boardId, null, themePersonnalise);
 
         var changed = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -49,7 +49,7 @@ public class ThemeChangeTests : IClassFixture<TestWebApplicationFactory>
         await connection.StartAsync();
         await connection.InvokeAsync("JoinBoard", boardId, autreParticipantId);
 
-        var themePersonnalise = new ThemePersonnaliseDto("Mon thème", ["A", "B"]);
+        var themePersonnalise = new ThemePersonnaliseDto("Mon thème", null, null, ["A", "B"]);
         var ex = await Assert.ThrowsAsync<HubException>(
             () => connection.InvokeAsync("ChangeTheme", boardId, null, themePersonnalise)
         );
@@ -73,7 +73,7 @@ public class ThemeChangeTests : IClassFixture<TestWebApplicationFactory>
             await addedTcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
         }
 
-        var themePersonnalise = new ThemePersonnaliseDto("Nouveau", ["Alpha", "Beta"]);
+        var themePersonnalise = new ThemePersonnaliseDto("Nouveau", null, null, ["Alpha", "Beta"]);
         await connection.InvokeAsync("ChangeTheme", boardId, null, themePersonnalise);
 
         var state = await GetBoardStateAsync(boardId);
@@ -108,7 +108,7 @@ public class ThemeChangeTests : IClassFixture<TestWebApplicationFactory>
         await connection.StartAsync();
         await connection.InvokeAsync("JoinBoard", boardId, facilitateurId);
 
-        var themePersonnalise = new ThemePersonnaliseDto("Vide", []);
+        var themePersonnalise = new ThemePersonnaliseDto("Vide", null, null, []);
         var ex = await Assert.ThrowsAsync<HubException>(
             () => connection.InvokeAsync("ChangeTheme", boardId, null, themePersonnalise)
         );

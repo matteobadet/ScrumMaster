@@ -53,7 +53,12 @@ export function CreateBoardPage() {
         themeId: themeSelection.kind === 'predefined' ? themeSelection.themeId || null : null,
         themePersonnalise:
           themeSelection.kind === 'custom'
-            ? { nom: themeSelection.nom || 'Thème personnalisé', colonnes: colonnesNonVides }
+            ? {
+                nom: themeSelection.nom || 'Thème personnalisé',
+                icone: themeSelection.icone.trim() || null,
+                contexte: themeSelection.contexte.trim() || null,
+                colonnes: colonnesNonVides,
+              }
             : null,
         maxVotesParParticipant: null,
         nomAffiche,

@@ -12,7 +12,7 @@ export function ThemeEditor({ themes, value, onChange }: ThemeEditorProps) {
   }
 
   function switchToCustom() {
-    onChange({ kind: 'custom', nom: '', colonnes: ['', ''] });
+    onChange({ kind: 'custom', nom: '', icone: '', contexte: '', colonnes: ['', ''] });
   }
 
   function updateColonne(index: number, intitule: string) {
@@ -62,6 +62,24 @@ export function ThemeEditor({ themes, value, onChange }: ThemeEditorProps) {
           <label>
             Nom du thème
             <input value={value.nom} onChange={(e) => onChange({ ...value, nom: e.target.value })} />
+          </label>
+          <label>
+            Icône (facultatif)
+            <input
+              value={value.icone}
+              onChange={(e) => onChange({ ...value, icone: e.target.value })}
+              placeholder="🎅"
+              maxLength={50}
+            />
+          </label>
+          <label>
+            Contexte (facultatif)
+            <textarea
+              value={value.contexte}
+              onChange={(e) => onChange({ ...value, contexte: e.target.value })}
+              placeholder="Plantez le décor de cette rétro…"
+              maxLength={500}
+            />
           </label>
           {value.colonnes.map((colonne, index) => (
             <div key={index}>

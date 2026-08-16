@@ -102,7 +102,13 @@ public class RetroBoardHub(
                 "ThemeChanged",
                 new
                 {
-                    theme = new { id = result.ThemeId, nom = result.Nom },
+                    theme = new
+                    {
+                        id = result.ThemeId,
+                        nom = result.Nom,
+                        icone = result.Icone,
+                        contexte = result.Contexte,
+                    },
                     colonnes = result.Colonnes,
                 }
             );

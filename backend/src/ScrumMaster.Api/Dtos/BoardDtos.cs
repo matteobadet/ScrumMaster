@@ -15,7 +15,7 @@ public record JoinBoardRequest(string NomAffiche);
 
 public record JoinBoardResponse(Guid ParticipantId, string Role);
 
-public record ThemeRefDto(Guid Id, string Nom);
+public record ThemeRefDto(Guid Id, string Nom, string? Icone, string? Contexte);
 
 public record ColonneDto(Guid Id, string Intitule, int Ordre);
 
@@ -33,7 +33,7 @@ public record ParticipantDto(Guid Id, string NomAffiche, string Role);
 
 public record ChangeThemeRequest(Guid? ThemeId, ThemePersonnaliseDto? ThemePersonnalise);
 
-public record ChangeThemeResult(Guid ThemeId, string Nom, IReadOnlyList<ColonneDto> Colonnes);
+public record ChangeThemeResult(Guid ThemeId, string Nom, string? Icone, string? Contexte, IReadOnlyList<ColonneDto> Colonnes);
 
 public record BoardStateDto(
     Guid BoardId,

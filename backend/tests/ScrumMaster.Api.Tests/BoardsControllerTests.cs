@@ -53,7 +53,7 @@ public class BoardsControllerTests : IClassFixture<TestWebApplicationFactory>
             AreaPath: "Krypton",
             Iteration: "Sprint-138",
             ThemeId: null,
-            ThemePersonnalise: new ThemePersonnaliseDto("Vide", []),
+            ThemePersonnalise: new ThemePersonnaliseDto("Vide", null, null, []),
             MaxVotesParParticipant: null,
             NomAffiche: "Alex"
         );

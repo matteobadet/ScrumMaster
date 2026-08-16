@@ -72,6 +72,8 @@ export function BoardPage() {
       }
       invoke('ChangeTheme', boardId, null, {
         nom: themeSelection.nom || 'Thème personnalisé',
+        icone: themeSelection.icone.trim() || null,
+        contexte: themeSelection.contexte.trim() || null,
         colonnes: colonnesNonVides,
       });
     } else {
@@ -84,8 +86,10 @@ export function BoardPage() {
   return (
     <div>
       <h1>
+        {board.theme.icone && <span aria-hidden="true">{board.theme.icone} </span>}
         {board.areaPath} — {board.iteration}
       </h1>
+      {board.theme.contexte && <p className="theme-contexte">{board.theme.contexte}</p>}
       <p>Participants : {board.participants.map((p) => p.nomAffiche).join(', ')}</p>
       <p>Mes votes restants : {board.mesVotesRestants ?? board.maxVotesParParticipant}</p>
       <p>

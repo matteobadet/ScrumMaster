@@ -1,17 +1,21 @@
 export interface ThemeSummary {
   id: string;
   nom: string;
+  icone: string | null;
+  contexte: string | null;
   colonnes: string[];
 }
 
 export interface ThemePersonnalise {
   nom: string;
+  icone: string | null;
+  contexte: string | null;
   colonnes: string[];
 }
 
 export type ThemeSelection =
   | { kind: 'predefined'; themeId: string }
-  | { kind: 'custom'; nom: string; colonnes: string[] };
+  | { kind: 'custom'; nom: string; icone: string; contexte: string; colonnes: string[] };
 
 export interface CreateBoardRequest {
   areaPath: string;
@@ -37,6 +41,8 @@ export interface JoinBoardResponse {
 export interface ThemeRef {
   id: string;
   nom: string;
+  icone: string | null;
+  contexte: string | null;
 }
 
 export interface ColonneState {
