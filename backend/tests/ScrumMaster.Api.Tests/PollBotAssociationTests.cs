@@ -2,6 +2,7 @@ using Microsoft.Bot.Builder.Adapters;
 using Microsoft.Bot.Schema;
 using Microsoft.EntityFrameworkCore;
 using ScrumMaster.Api.Bots;
+using ScrumMaster.Api.Cards;
 using ScrumMaster.Api.Data;
 using ScrumMaster.Api.Models;
 using ScrumMaster.Api.Services;
@@ -17,6 +18,8 @@ public class PollBotAssociationTests
         return new ScrumMasterDbContext(options);
     }
 
+    private static RetroPollBot CreateBot(ScrumMasterDbContext db) => new(new PollService(db), new PollCardBuilder());
+
     [Fact]
     public async Task Associer_AvecEquipeExistante_MetAJourLeChannelDuMessageCourant()
     {
@@ -24,7 +27,7 @@ public class PollBotAssociationTests
         db.Equipes.Add(new Equipe { AreaPath = "Krypton" });
         await db.SaveChangesAsync();
 
-        var bot = new RetroPollBot(new PollService(db));
+        var bot = CreateBot(db);
         var adapter = new TestAdapter();
 
         await new TestFlow(adapter, bot.OnTurnAsync)
@@ -40,7 +43,7 @@ public class PollBotAssociationTests
     public async Task Associer_AvecAreaPathInconnue_EstRefuseSansCreerDeChannel()
     {
         await using var db = CreateDb();
-        var bot = new RetroPollBot(new PollService(db));
+        var bot = CreateBot(db);
         var adapter = new TestAdapter();
 
         await new TestFlow(adapter, bot.OnTurnAsync)
@@ -55,7 +58,7 @@ public class PollBotAssociationTests
     public async Task CommandeNonReconnue_RecoitUnMessageDAide()
     {
         await using var db = CreateDb();
-        var bot = new RetroPollBot(new PollService(db));
+        var bot = CreateBot(db);
         var adapter = new TestAdapter();
 
         await new TestFlow(adapter, bot.OnTurnAsync)

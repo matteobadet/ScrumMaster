@@ -125,31 +125,39 @@ comptes (y compris en changeant de réponse), et vérifier le décompte affiché
 
 ### Tests for User Story 2
 
-- [ ] T016 [P] [US2] Test d'intégration : `sonder <type>` crée un poll et envoie la carte, rejette
+- [X] T016 [P] [US2] Test d'intégration : `sonder <type>` crée un poll et envoie la carte, rejette
       si aucun channel n'est associé, rejette si un poll est déjà ouvert pour le jour (FR-003,
       Edge Cases) dans `backend/tests/ScrumMaster.Api.Tests/PollTriggerTests.cs`
-- [ ] T017 [P] [US2] Test d'intégration : un clic sur la carte enregistre le vote, un second clic
+- [X] T017 [P] [US2] Test d'intégration : un clic sur la carte enregistre le vote, un second clic
       du même membre remplace son vote précédent (FR-007), un vote sur un poll clos est rejeté
-      (FR-008) dans `backend/tests/ScrumMaster.Api.Tests/PollVoteTests.cs`
+      (FR-008) dans `backend/tests/ScrumMaster.Api.Tests/PollVoteTests.cs`. Le rejet est vérifié
+      via `AdaptiveCardInvokeResponse.StatusCode` (400) lu dans `InvokeResponse.Body` — le
+      `InvokeResponse.Status` transport reste 200 pour toute invoke `adaptiveCard/action` traitée
+      avec succès par le pipeline, qu'elle soit acceptée ou refusée au niveau applicatif.
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Implémenter `PollService.DeclencherPollAsync` (résolution de l'équipe par
+- [X] T018 [US2] Implémenter `PollService.DeclencherPollAsync` (résolution de l'équipe par
       channel, contrôle qu'aucun poll n'est déjà ouvert pour ce type/jour, création) dans
       `backend/src/ScrumMaster.Api/Services/PollService.cs` (dépend de T007)
-- [ ] T019 [US2] Implémenter `PollService.VoterAsync` (upsert du vote par `(PollId, TeamsUserId)`,
+- [X] T019 [US2] Implémenter `PollService.VoterAsync` (upsert du vote par `(PollId, TeamsUserId)`,
       contrôle poll ouvert) dans `backend/src/ScrumMaster.Api/Services/PollService.cs` (dépend de
       T007)
-- [ ] T020 [US2] Implémenter `PollCardBuilder.BuildPollCard` (titre, type de réunion, décompte
-      courant, boutons `Action.Submit` "Utile"/"Pas nécessaire" — voir contracts/adaptive-cards.md)
-      dans `backend/src/ScrumMaster.Api/Cards/PollCardBuilder.cs` (dépend de T012)
-- [ ] T021 [US2] Implémenter dans `RetroPollBot` le parsing de la commande
+- [X] T020 [US2] Implémenter `PollCardBuilder.BuildPollCard` (titre, type de réunion, décompte
+      courant, boutons vote "Utile"/"Pas nécessaire" — voir contracts/adaptive-cards.md) dans
+      `backend/src/ScrumMaster.Api/Cards/PollCardBuilder.cs` (dépend de T012). Écart par rapport au
+      texte de la tâche : boutons `Action.Execute` (Universal Actions) et non `Action.Submit` —
+      décision déjà actée dans research.md#2, qui permet la mise à jour en place de la carte via
+      la réponse à l'invoke plutôt qu'un second appel proactif.
+- [X] T021 [US2] Implémenter dans `RetroPollBot` le parsing de la commande
       `sonder <mêlée|rétro>`, l'appel à `PollService.DeclencherPollAsync` et l'envoi de la carte
       dans `backend/src/ScrumMaster.Api/Bots/RetroPollBot.cs` (dépend de T015, T018, T020)
-- [ ] T022 [US2] Implémenter dans `RetroPollBot` le traitement des activités `Invoke`
-      (`adaptiveCard/action`) pour le vote, l'appel à `PollService.VoterAsync` et la mise à jour
-      de la carte via `UpdateActivityAsync` dans
-      `backend/src/ScrumMaster.Api/Bots/RetroPollBot.cs` (dépend de T019, T020, T021)
+- [X] T022 [US2] Implémenter dans `RetroPollBot` le traitement des activités `Invoke`
+      (`adaptiveCard/action`) pour le vote et l'appel à `PollService.VoterAsync` dans
+      `backend/src/ScrumMaster.Api/Bots/RetroPollBot.cs` (dépend de T019, T020, T021). Écart par
+      rapport au texte de la tâche : la carte mise à jour est renvoyée comme `Value` de
+      l'`AdaptiveCardInvokeResponse` (mécanisme Action.Execute standard), pas via
+      `UpdateActivityAsync` — cohérent avec le choix Action.Execute de T020/research.md#2.
 
 **Checkpoint**: User Stories 1 et 2 fonctionnelles ensemble.
 

@@ -2,6 +2,7 @@ using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.EntityFrameworkCore;
 using ScrumMaster.Api.Bots;
+using ScrumMaster.Api.Cards;
 using ScrumMaster.Api.Data;
 using ScrumMaster.Api.Hubs;
 using ScrumMaster.Api.Middleware;
@@ -26,6 +27,7 @@ builder.Services.AddScoped<PostItService>();
 builder.Services.AddScoped<ParticipantService>();
 builder.Services.AddScoped<VoteService>();
 builder.Services.AddScoped<PollService>();
+builder.Services.AddSingleton<PollCardBuilder>();
 
 // Bot Framework (specs/002-poll-utilite-reunion) — identifiants via
 // MicrosoftAppId/MicrosoftAppPassword/MicrosoftAppTenantId (appsettings / Secret Kubernetes).
