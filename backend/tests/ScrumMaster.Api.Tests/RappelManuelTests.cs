@@ -1,3 +1,4 @@
+using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Adapters;
 using Microsoft.EntityFrameworkCore;
 using ScrumMaster.Api.Bots;
@@ -9,7 +10,7 @@ using Xunit;
 
 namespace ScrumMaster.Api.Tests;
 
-public class PollTriggerTests
+public class RappelManuelTests
 {
     private static ScrumMasterDbContext CreateDb()
     {
@@ -20,20 +21,40 @@ public class PollTriggerTests
     private static RetroPollBot CreateBot(ScrumMasterDbContext db) => new(new PollService(db), new PollCardBuilder(), new RappelService(db));
 
     [Fact]
-    public async Task Sonder_SurChannelNonAssocie_EstRefuse()
+    public async Task Rappeler_SurChannelAssocie_EnvoieUnRappelSansPoll()
+    {
+        await using var db = CreateDb();
+        var bot = CreateBot(db);
+        var adapter = new TestAdapter();
+        db.Equipes.Add(new Equipe { AreaPath = "Krypton", TeamsChannelId = adapter.Conversation.Conversation.Id });
+        await db.SaveChangesAsync();
+
+        await new TestFlow(adapter, bot.OnTurnAsync)
+            .Send("rappeler mêlée")
+            .AssertReply(activity => Assert.Contains("Rappel", activity.AsMessageActivity()!.Text))
+            .StartTestAsync();
+
+        Assert.Empty(await db.PollsUtilite.ToListAsync());
+        Assert.Single(await db.RappelsEnvoyes.ToListAsync());
+    }
+
+    [Fact]
+    public async Task Rappeler_SurChannelNonAssocie_EstRefuse()
     {
         await using var db = CreateDb();
         var bot = CreateBot(db);
         var adapter = new TestAdapter();
 
         await new TestFlow(adapter, bot.OnTurnAsync)
-            .Send("sonder mêlée")
+            .Send("rappeler mêlée")
             .AssertReply(activity => Assert.Contains("associé à aucune équipe", activity.AsMessageActivity()!.Text))
             .StartTestAsync();
+
+        Assert.Empty(await db.RappelsEnvoyes.ToListAsync());
     }
 
     [Fact]
-    public async Task Sonder_SurChannelAssocie_CreeUnPollEtEnvoieLaCarte()
+    public async Task Rappeler_DeuxFoisLeMemeJour_EstRefuseLaSecondeFois()
     {
         await using var db = CreateDb();
         var bot = CreateBot(db);
@@ -41,33 +62,13 @@ public class PollTriggerTests
         db.Equipes.Add(new Equipe { AreaPath = "Krypton", TeamsChannelId = adapter.Conversation.Conversation.Id });
         await db.SaveChangesAsync();
 
-        await new TestFlow(adapter, bot.OnTurnAsync)
-            .Send("sonder mêlée")
-            .AssertReply(activity => Assert.NotEmpty(activity.AsMessageActivity()!.Attachments))
-            .StartTestAsync();
-
-        var poll = await db.PollsUtilite.SingleAsync();
-        Assert.Equal("Krypton", poll.AreaPath);
-        Assert.Equal(TypeReunion.Melee, poll.TypeReunion);
-        Assert.Equal(StatutPoll.Ouvert, poll.Statut);
-    }
-
-    [Fact]
-    public async Task Sonder_AvecUnPollDejaOuvert_EstRefuse()
-    {
-        await using var db = CreateDb();
-        var bot = CreateBot(db);
-        var adapter = new TestAdapter();
-        db.Equipes.Add(new Equipe { AreaPath = "Krypton", TeamsChannelId = adapter.Conversation.Conversation.Id });
-        await db.SaveChangesAsync();
-
-        await new TestFlow(adapter, bot.OnTurnAsync).Send("sonder mêlée").AssertReply(_ => { }).StartTestAsync();
+        await new TestFlow(adapter, bot.OnTurnAsync).Send("rappeler mêlée").AssertReply(_ => { }).StartTestAsync();
 
         await new TestFlow(adapter, bot.OnTurnAsync)
-            .Send("sonder mêlée")
-            .AssertReply(activity => Assert.Contains("déjà ouvert", activity.AsMessageActivity()!.Text))
+            .Send("rappeler mêlée")
+            .AssertReply(activity => Assert.Contains("déjà été envoyé", activity.AsMessageActivity()!.Text))
             .StartTestAsync();
 
-        Assert.Equal(1, await db.PollsUtilite.CountAsync());
+        Assert.Single(await db.RappelsEnvoyes.ToListAsync());
     }
 }

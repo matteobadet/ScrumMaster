@@ -27,6 +27,7 @@ builder.Services.AddScoped<PostItService>();
 builder.Services.AddScoped<ParticipantService>();
 builder.Services.AddScoped<VoteService>();
 builder.Services.AddScoped<PollService>();
+builder.Services.AddScoped<RappelService>();
 builder.Services.AddSingleton<PollCardBuilder>();
 
 // Bot Framework (specs/002-poll-utilite-reunion) — identifiants via

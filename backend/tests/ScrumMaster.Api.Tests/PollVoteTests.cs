@@ -21,7 +21,7 @@ public class PollVoteTests
         return new ScrumMasterDbContext(options);
     }
 
-    private static RetroPollBot CreateBot(ScrumMasterDbContext db) => new(new PollService(db), new PollCardBuilder());
+    private static RetroPollBot CreateBot(ScrumMasterDbContext db) => new(new PollService(db), new PollCardBuilder(), new RappelService(db));
 
     private static Activity CreateVoteInvokeActivity(Guid pollId, string reponse, string userId, string userName) =>
         new()

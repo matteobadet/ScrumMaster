@@ -18,7 +18,7 @@ public class PollBotAssociationTests
         return new ScrumMasterDbContext(options);
     }
 
-    private static RetroPollBot CreateBot(ScrumMasterDbContext db) => new(new PollService(db), new PollCardBuilder());
+    private static RetroPollBot CreateBot(ScrumMasterDbContext db) => new(new PollService(db), new PollCardBuilder(), new RappelService(db));
 
     [Fact]
     public async Task Associer_AvecEquipeExistante_MetAJourLeChannelDuMessageCourant()

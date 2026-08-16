@@ -13,7 +13,7 @@ namespace ScrumMaster.Api.Bots;
 /// courant, sans messagerie proactive (research.md#1). Le vote se fait via une Adaptive Card
 /// Action.Execute (research.md#2), traitée par OnAdaptiveCardInvokeAsync.
 /// </summary>
-public class RetroPollBot(PollService pollService, PollCardBuilder cardBuilder) : ActivityHandler
+public class RetroPollBot(PollService pollService, PollCardBuilder cardBuilder, RappelService rappelService) : ActivityHandler
 {
     protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
     {
@@ -39,9 +39,15 @@ public class RetroPollBot(PollService pollService, PollCardBuilder cardBuilder) 
             return;
         }
 
+        if (mots.Length >= 2 && mots[0].Equals("rappeler", StringComparison.OrdinalIgnoreCase))
+        {
+            await TraiterRappelerAsync(turnContext, mots[1], cancellationToken);
+            return;
+        }
+
         await turnContext.SendActivityAsync(
             MessageFactory.Text(
-                "Commande non reconnue. Essayez : \"associer <area-path>\", \"sonder <mêlée|rétro>\", \"clore <mêlée|rétro>\"."
+                "Commande non reconnue. Essayez : \"associer <area-path>\", \"sonder <mêlée|rétro>\", \"clore <mêlée|rétro>\", \"rappeler <mêlée|rétro>\"."
             ),
             cancellationToken
         );
@@ -104,12 +110,51 @@ public class RetroPollBot(PollService pollService, PollCardBuilder cardBuilder) 
             var result = await pollService.CloturerAsync(turnContext.Activity.Conversation.Id, typeReunion.Value);
             var carte = cardBuilder.BuildResultCard(result.TypeReunion, result.ReunionMaintenue, result.Votes);
             await turnContext.SendActivityAsync(MessageFactory.Attachment(carte), cancellationToken);
+
+            if (result.ReunionMaintenue)
+            {
+                var envoye = await rappelService.EnvoyerRappelAutomatiqueSiPossibleAsync(
+                    turnContext.Activity.Conversation.Id,
+                    result.TypeReunion
+                );
+                if (envoye)
+                {
+                    await turnContext.SendActivityAsync(MessageFactory.Text(MessageRappel(result.TypeReunion)), cancellationToken);
+                }
+            }
         }
         catch (DomainValidationException ex)
         {
             await turnContext.SendActivityAsync(MessageFactory.Text(ex.Message), cancellationToken);
         }
     }
+
+    private async Task TraiterRappelerAsync(ITurnContext turnContext, string typeMot, CancellationToken cancellationToken)
+    {
+        var typeReunion = ParserTypeReunion(typeMot);
+        if (typeReunion is null)
+        {
+            await turnContext.SendActivityAsync(
+                MessageFactory.Text("Type de réunion non reconnu. Utilisez \"mêlée\" ou \"rétro\"."),
+                cancellationToken
+            );
+            return;
+        }
+
+        try
+        {
+            await rappelService.EnvoyerRappelManuelAsync(turnContext.Activity.Conversation.Id, typeReunion.Value);
+            await turnContext.SendActivityAsync(MessageFactory.Text(MessageRappel(typeReunion.Value)), cancellationToken);
+        }
+        catch (DomainValidationException ex)
+        {
+            await turnContext.SendActivityAsync(MessageFactory.Text(ex.Message), cancellationToken);
+        }
+    }
+
+    private static string MessageRappel(TypeReunion typeReunion) => $"📅 Rappel : la {Libelle(typeReunion)} du jour a bien lieu.";
+
+    private static string Libelle(TypeReunion typeReunion) => typeReunion == TypeReunion.Melee ? "mêlée" : "rétrospective";
 
     protected override async Task<AdaptiveCardInvokeResponse> OnAdaptiveCardInvokeAsync(
         ITurnContext<IInvokeActivity> turnContext,

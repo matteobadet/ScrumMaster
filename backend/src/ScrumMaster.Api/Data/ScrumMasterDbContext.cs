@@ -23,6 +23,8 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
 
     public DbSet<VoteUtilite> VotesUtilite => Set<VoteUtilite>();
 
+    public DbSet<RappelEnvoye> RappelsEnvoyes => Set<RappelEnvoye>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Equipe>(entity =>
@@ -131,6 +133,17 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
                 .WithMany(p => p.Votes)
                 .HasForeignKey(e => e.PollId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RappelEnvoye>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity
+                .HasOne(e => e.Equipe)
+                .WithMany()
+                .HasForeignKey(e => e.AreaPath)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.AreaPath, e.TypeReunion, e.Date }).IsUnique();
         });
     }
 }

@@ -19,7 +19,7 @@ public class PollClosureTests
         return new ScrumMasterDbContext(options);
     }
 
-    private static RetroPollBot CreateBot(ScrumMasterDbContext db) => new(new PollService(db), new PollCardBuilder());
+    private static RetroPollBot CreateBot(ScrumMasterDbContext db) => new(new PollService(db), new PollCardBuilder(), new RappelService(db));
 
     private async Task<(ScrumMasterDbContext Db, TestAdapter Adapter, RetroPollBot Bot, Guid PollId)> CreateOpenPollAsync()
     {
