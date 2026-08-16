@@ -48,6 +48,7 @@ export interface PostItState {
   auteur: string;
   auteurParticipantId: string;
   nombreVotes: number;
+  voteDuParticipant: boolean;
 }
 
 export interface ParticipantState {
@@ -62,6 +63,7 @@ export interface BoardState {
   iteration: string;
   statut: 'Actif' | 'Cloture';
   maxVotesParParticipant: number;
+  mesVotesRestants: number | null;
   theme: ThemeRef;
   colonnes: ColonneState[];
   postIts: PostItState[];

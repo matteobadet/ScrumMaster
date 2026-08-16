@@ -16,9 +16,9 @@ public class BoardsController(BoardService boardService, ParticipantService part
     }
 
     [HttpGet("{boardId:guid}")]
-    public async Task<ActionResult<BoardStateDto>> GetBoard(Guid boardId)
+    public async Task<ActionResult<BoardStateDto>> GetBoard(Guid boardId, [FromQuery] Guid? asParticipantId)
     {
-        var state = await boardService.GetBoardStateAsync(boardId);
+        var state = await boardService.GetBoardStateAsync(boardId, asParticipantId);
         return Ok(state);
     }
 

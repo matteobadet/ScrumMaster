@@ -60,7 +60,7 @@ public class BoardService(ScrumMasterDbContext db)
         return new CreateBoardResponse(board.Id, facilitateur.Id, facilitateur.Role.ToString(), $"/board/{board.Id}");
     }
 
-    public async Task<BoardStateDto> GetBoardStateAsync(Guid boardId)
+    public async Task<BoardStateDto> GetBoardStateAsync(Guid boardId, Guid? asParticipantId = null)
     {
         var board = await db
             .Boards.Include(b => b.Theme!)
@@ -79,22 +79,32 @@ public class BoardService(ScrumMasterDbContext db)
 
         var colonnes = board.Theme!.Colonnes.OrderBy(c => c.Ordre).ToList();
 
+        int? mesVotesRestants = null;
+        if (asParticipantId is { } participantId)
+        {
+            var votesUtilises = board.PostIts.SelectMany(p => p.Votes).Count(v => v.ParticipantId == participantId);
+            mesVotesRestants = Math.Max(0, board.MaxVotesParParticipant - votesUtilises);
+        }
+
         return new BoardStateDto(
             board.Id,
             board.AreaPath,
             board.Iteration,
             board.Statut.ToString(),
             board.MaxVotesParParticipant,
+            mesVotesRestants,
             new ThemeRefDto(board.Theme.Id, board.Theme.Nom),
             colonnes.Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre)).ToList(),
             board
-                .PostIts.Select(p => new PostItDto(
+                .PostIts.OrderBy(p => p.DateCreation)
+                .Select(p => new PostItDto(
                     p.Id,
                     p.ColonneId,
                     p.Texte,
                     p.Auteur?.NomAffiche ?? string.Empty,
                     p.AuteurParticipantId,
-                    p.Votes.Count
+                    p.Votes.Count,
+                    asParticipantId is { } pid && p.Votes.Any(v => v.ParticipantId == pid)
                 ))
                 .ToList(),
             board.Participants.Select(p => new ParticipantDto(p.Id, p.NomAffiche, p.Role.ToString())).ToList()

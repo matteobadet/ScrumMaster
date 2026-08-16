@@ -60,10 +60,13 @@ Rejoint un board existant (FR-012 — le lien seul suffit). Refusé (404) si le 
 { "participantId": "guid", "role": "Participant" }
 ```
 
-## `GET /api/boards/{boardId}`
+## `GET /api/boards/{boardId}?asParticipantId={participantId}`
 
 Charge l'état complet du board — utilisé au premier chargement et lors d'une reconnexion (User
-Story 2, scénario 3). Refusé (404) si le board n'existe pas.
+Story 2, scénario 3). Refusé (404) si le board n'existe pas. Le paramètre de requête
+`asParticipantId` est optionnel ; lorsqu'il est fourni (toujours par le client, avec son propre
+`participantId`), la réponse est personnalisée avec `mesVotesRestants` et, pour chaque post-it,
+`voteDuParticipant` — sans exposer qui d'autre a voté pour quoi.
 
 **Réponse 200** :
 ```json
@@ -73,6 +76,7 @@ Story 2, scénario 3). Refusé (404) si le board n'existe pas.
   "iteration": "Sprint-138",
   "statut": "Actif",
   "maxVotesParParticipant": 3,
+  "mesVotesRestants": 2,
   "theme": { "id": "guid", "nom": "Start / Stop / Continue" },
   "colonnes": [{ "id": "guid", "intitule": "Start", "ordre": 0 }],
   "postIts": [
@@ -82,13 +86,13 @@ Story 2, scénario 3). Refusé (404) si le board n'existe pas.
       "texte": "…",
       "auteur": "Alex",
       "auteurParticipantId": "guid",
-      "nombreVotes": 2
+      "nombreVotes": 2,
+      "voteDuParticipant": true
     }
   ],
   "participants": [{ "id": "guid", "nomAffiche": "Alex", "role": "Facilitateur" }]
 }
 ```
 
-Le décompte de votes d'un participant donné (pour savoir combien il lui en reste, FR-008) est
-renvoyé séparément via le hub à la jonction (`ParticipantJoined`, voir realtime-hub.md) pour éviter
-d'exposer qui a voté pour quoi aux autres participants au-delà du total agrégé.
+`mesVotesRestants` vaut `null` et `voteDuParticipant` vaut `false` pour chaque post-it lorsque
+`asParticipantId` est omis.

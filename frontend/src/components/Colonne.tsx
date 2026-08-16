@@ -7,10 +7,13 @@ interface ColonneProps {
   colonnesDisponibles: ColonneState[];
   postIts: PostItState[];
   currentParticipantId: string;
+  votesRestants: number | null;
   onAddPostIt: (colonneId: string, texte: string) => void;
   onEditPostIt: (postItId: string, texte: string) => void;
   onDeletePostIt: (postItId: string) => void;
   onMovePostIt: (postItId: string, colonneId: string) => void;
+  onVotePostIt: (postItId: string) => void;
+  onRemoveVotePostIt: (postItId: string) => void;
 }
 
 export function Colonne({
@@ -18,10 +21,13 @@ export function Colonne({
   colonnesDisponibles,
   postIts,
   currentParticipantId,
+  votesRestants,
   onAddPostIt,
   onEditPostIt,
   onDeletePostIt,
   onMovePostIt,
+  onVotePostIt,
+  onRemoveVotePostIt,
 }: ColonneProps) {
   const [nouveauTexte, setNouveauTexte] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -47,9 +53,12 @@ export function Colonne({
             postIt={postIt}
             isAuthor={postIt.auteurParticipantId === currentParticipantId}
             autresColonnes={colonnesDisponibles.filter((c) => c.id !== colonne.id)}
+            votesRestants={votesRestants}
             onEdit={(texte) => onEditPostIt(postIt.id, texte)}
             onDelete={() => onDeletePostIt(postIt.id)}
             onMove={(colonneId) => onMovePostIt(postIt.id, colonneId)}
+            onVote={() => onVotePostIt(postIt.id)}
+            onRemoveVote={() => onRemoveVotePostIt(postIt.id)}
           />
         ))}
       </div>

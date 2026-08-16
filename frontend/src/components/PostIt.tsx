@@ -1,16 +1,30 @@
 import { useState } from 'react';
+import { VoteCounter } from './VoteCounter';
 import type { ColonneState, PostItState } from '../types';
 
 interface PostItProps {
   postIt: PostItState;
   isAuthor: boolean;
   autresColonnes: ColonneState[];
+  votesRestants: number | null;
   onEdit: (texte: string) => void;
   onDelete: () => void;
   onMove: (colonneId: string) => void;
+  onVote: () => void;
+  onRemoveVote: () => void;
 }
 
-export function PostIt({ postIt, isAuthor, autresColonnes, onEdit, onDelete, onMove }: PostItProps) {
+export function PostIt({
+  postIt,
+  isAuthor,
+  autresColonnes,
+  votesRestants,
+  onEdit,
+  onDelete,
+  onMove,
+  onVote,
+  onRemoveVote,
+}: PostItProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(postIt.texte);
   const [error, setError] = useState<string | null>(null);
@@ -46,9 +60,14 @@ export function PostIt({ postIt, isAuthor, autresColonnes, onEdit, onDelete, onM
       ) : (
         <>
           <p>{postIt.texte}</p>
-          <p className="post-it-meta">
-            {postIt.auteur} · {postIt.nombreVotes} vote(s)
-          </p>
+          <p className="post-it-meta">{postIt.auteur}</p>
+          <VoteCounter
+            nombreVotes={postIt.nombreVotes}
+            aVote={postIt.voteDuParticipant}
+            votesRestants={votesRestants}
+            onVote={onVote}
+            onRemoveVote={onRemoveVote}
+          />
           {autresColonnes.length > 0 && (
             <label>
               Déplacer vers

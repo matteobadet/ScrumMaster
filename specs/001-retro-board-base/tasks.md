@@ -176,19 +176,22 @@ quota, retirer un vote, vérifier que les compteurs sont corrects et partagés p
 
 ### Tests for User Story 3
 
-- [ ] T041 [P] [US3] Test d'intégration : `Vote`/`RemoveVote` respectent le quota
+- [X] T041 [P] [US3] Test d'intégration : `Vote`/`RemoveVote` respectent le quota
       `MaxVotesParParticipant` et l'unicité `(PostItId, ParticipantId)` (FR-008, FR-009) dans
       `backend/tests/ScrumMaster.Api.Tests/VoteTests.cs`
 
 ### Implementation for User Story 3
 
-- [ ] T042 [US3] Implémenter `VoteService` (vote, retrait, contrôle quota et unicité) dans
+- [X] T042 [US3] Implémenter `VoteService` (vote, retrait, contrôle quota et unicité) dans
       `backend/src/ScrumMaster.Api/Services/VoteService.cs` (dépend de T016)
-- [ ] T043 [US3] Implémenter `Vote` et `RemoveVote` et la diffusion `VoteChanged` dans
-      `backend/src/ScrumMaster.Api/Hubs/RetroBoardHub.cs` (dépend de T029, T042)
-- [ ] T044 [US3] Implémenter `VoteCounter` (bouton de vote, votes restants) dans
+- [X] T043 [US3] Implémenter `Vote` et `RemoveVote` et la diffusion `VoteChanged` dans
+      `backend/src/ScrumMaster.Api/Hubs/RetroBoardHub.cs` (dépend de T029, T042). Étendu avec un
+      événement `MonVoteChanged` ciblé (`Clients.Caller`) et `GET /api/boards/{id}?asParticipantId=`
+      pour restituer `voteDuParticipant`/`mesVotesRestants` sans exposer les votes des autres
+      participants (voir contracts/).
+- [X] T044 [US3] Implémenter `VoteCounter` (bouton de vote, votes restants) dans
       `frontend/src/components/VoteCounter.tsx` (dépend de T038)
-- [ ] T045 [US3] Intégrer `VoteCounter` dans `PostIt` dans
+- [X] T045 [US3] Intégrer `VoteCounter` dans `PostIt` dans
       `frontend/src/components/PostIt.tsx` (dépend de T031, T044)
 
 **Checkpoint**: User Stories 1, 2 et 3 fonctionnelles ensemble.

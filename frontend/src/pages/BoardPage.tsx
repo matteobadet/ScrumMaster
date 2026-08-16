@@ -35,6 +35,7 @@ export function BoardPage() {
         {board.areaPath} — {board.iteration}
       </h1>
       <p>Participants : {board.participants.map((p) => p.nomAffiche).join(', ')}</p>
+      <p>Mes votes restants : {board.mesVotesRestants ?? board.maxVotesParParticipant}</p>
       <p>
         Lien à partager pour rejoindre :{' '}
         <a href={`${window.location.origin}/join/${boardId}`}>{`${window.location.origin}/join/${boardId}`}</a>
@@ -47,10 +48,13 @@ export function BoardPage() {
             colonnesDisponibles={board.colonnes}
             postIts={board.postIts.filter((p) => p.colonneId === colonne.id)}
             currentParticipantId={participant.participantId}
+            votesRestants={board.mesVotesRestants}
             onAddPostIt={(colonneId, texte) => invoke('AddPostIt', boardId, colonneId, texte)}
             onEditPostIt={(postItId, texte) => invoke('EditPostIt', boardId, postItId, texte)}
             onDeletePostIt={(postItId) => invoke('DeletePostIt', boardId, postItId)}
             onMovePostIt={(postItId, colonneId) => invoke('MovePostIt', boardId, postItId, colonneId)}
+            onVotePostIt={(postItId) => invoke('Vote', boardId, postItId)}
+            onRemoveVotePostIt={(postItId) => invoke('RemoveVote', boardId, postItId)}
           />
         ))}
       </div>

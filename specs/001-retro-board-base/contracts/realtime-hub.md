@@ -11,7 +11,7 @@ Route : `/hubs/retro-board`. Chaque board correspond à un groupe SignalR (nom d
 | `JoinBoard` | `boardId`, `participantId` | Tout participant existant | `participantId` inconnu du board |
 | `AddPostIt` | `boardId`, `colonneId`, `texte` | Tout participant | `texte` vide (FR-015) ; board `Cloture` (FR-016) |
 | `EditPostIt` | `boardId`, `postItId`, `texte` | Auteur du post-it uniquement (FR-005) | `texte` vide ; auteur ≠ appelant ; board `Cloture` |
-| `MovePostIt` | `boardId`, `postItId`, `colonneId` | Auteur du post-it uniquement | `colonneId` hors du thème du board ; board `Cloture` |
+| `MovePostIt` | `boardId`, `postItId`, `colonneId` | Tout participant (FR-006 ne restreint pas à l'auteur, contrairement à FR-005) | `colonneId` hors du thème du board ; board `Cloture` |
 | `DeletePostIt` | `boardId`, `postItId` | Auteur du post-it uniquement | auteur ≠ appelant ; board `Cloture` |
 | `Vote` | `boardId`, `postItId` | Tout participant | quota `MaxVotesParParticipant` atteint (FR-008) ; déjà voté pour ce post-it ; board `Cloture` |
 | `RemoveVote` | `boardId`, `postItId` | Tout participant (son propre vote) | aucun vote existant à retirer |
@@ -38,6 +38,13 @@ source de vérité unique côté client) :
 | `VoteChanged` | `{ postItId, nombreVotes }` | `Vote` / `RemoveVote` |
 | `ThemeChanged` | `{ theme, colonnes }` | `ChangeTheme` |
 | `BoardClosed` | `{ boardId }` | `CloseBoard` — le client passe le board en lecture seule (désactive les contrôles de mutation) |
+
+Diffusé uniquement à l'appelant (`Clients.Caller`), pour ne pas exposer le quota personnel des
+autres participants :
+
+| Événement | Payload | Déclenché par |
+|-----------|---------|----------------|
+| `MonVoteChanged` | `{ postItId, voteDuParticipant, votesRestants }` | `Vote` / `RemoveVote`, pour l'appelant lui-même |
 
 ## Reconnexion (User Story 2, scénario 3)
 

@@ -28,6 +28,17 @@ interface ParticipantJoinedEvent {
   role: ParticipantState['role'];
 }
 
+interface VoteChangedEvent {
+  postItId: string;
+  nombreVotes: number;
+}
+
+interface MonVoteChangedEvent {
+  postItId: string;
+  voteDuParticipant: boolean;
+  votesRestants: number;
+}
+
 /**
  * Charge l'état d'un board, maintient une connexion SignalR au hub (contracts/realtime-hub.md)
  * et resynchronise l'état via une nouvelle lecture REST à chaque reconnexion automatique
@@ -53,7 +64,7 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
     const participantId = participant.participantId;
 
     async function resync() {
-      const state = await boardsApi.getBoard(boardId!);
+      const state = await boardsApi.getBoard(boardId!, participantId);
       if (!cancelled) {
         setBoard(state);
       }
@@ -98,6 +109,26 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
       connection.on('PostItDeleted', ({ postItId }: PostItDeletedEvent) => {
         setBoard((current) =>
           current ? { ...current, postIts: current.postIts.filter((p) => p.id !== postItId) } : current,
+        );
+      });
+
+      connection.on('VoteChanged', ({ postItId, nombreVotes }: VoteChangedEvent) => {
+        setBoard((current) =>
+          current
+            ? { ...current, postIts: current.postIts.map((p) => (p.id === postItId ? { ...p, nombreVotes } : p)) }
+            : current,
+        );
+      });
+
+      connection.on('MonVoteChanged', ({ postItId, voteDuParticipant, votesRestants }: MonVoteChangedEvent) => {
+        setBoard((current) =>
+          current
+            ? {
+                ...current,
+                mesVotesRestants: votesRestants,
+                postIts: current.postIts.map((p) => (p.id === postItId ? { ...p, voteDuParticipant } : p)),
+              }
+            : current,
         );
       });
 

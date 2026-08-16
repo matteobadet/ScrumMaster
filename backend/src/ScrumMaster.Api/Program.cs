@@ -21,6 +21,7 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<BoardService>();
 builder.Services.AddScoped<PostItService>();
 builder.Services.AddScoped<ParticipantService>();
+builder.Services.AddScoped<VoteService>();
 
 const string FrontendDevCorsPolicy = "FrontendDev";
 builder.Services.AddCors(options =>

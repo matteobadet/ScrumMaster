@@ -9,7 +9,7 @@ namespace ScrumMaster.Api.Hubs;
 /// Hub temps réel du board de rétrospective — un groupe SignalR par BoardId.
 /// Voir specs/001-retro-board-base/contracts/realtime-hub.md pour le contrat complet.
 /// </summary>
-public class RetroBoardHub(ScrumMasterDbContext db, PostItService postItService) : Hub
+public class RetroBoardHub(ScrumMasterDbContext db, PostItService postItService, VoteService voteService) : Hub
 {
     public async Task JoinBoard(Guid boardId, Guid participantId)
     {
@@ -24,6 +24,8 @@ public class RetroBoardHub(ScrumMasterDbContext db, PostItService postItService)
 
         await Groups.AddToGroupAsync(Context.ConnectionId, boardId.ToString());
 
+        var votesRestants = await voteService.GetVotesRestantsAsync(boardId, participantId);
+
         await Clients
             .Group(boardId.ToString())
             .SendAsync(
@@ -33,6 +35,49 @@ public class RetroBoardHub(ScrumMasterDbContext db, PostItService postItService)
                     participantId = participant.Id,
                     nomAffiche = participant.NomAffiche,
                     role = participant.Role.ToString(),
+                    votesRestants,
+                }
+            );
+    }
+
+    public async Task Vote(Guid boardId, Guid postItId)
+    {
+        var callerId = await ResolveCallerParticipantIdAsync(boardId);
+
+        var result = await RunOrThrowHubExceptionAsync(() => voteService.VoteAsync(boardId, postItId, callerId));
+
+        await Clients
+            .Group(boardId.ToString())
+            .SendAsync("VoteChanged", new { postItId = result.PostItId, nombreVotes = result.NombreVotes });
+        await Clients
+            .Caller.SendAsync(
+                "MonVoteChanged",
+                new
+                {
+                    postItId = result.PostItId,
+                    voteDuParticipant = true,
+                    votesRestants = result.VotesRestants,
+                }
+            );
+    }
+
+    public async Task RemoveVote(Guid boardId, Guid postItId)
+    {
+        var callerId = await ResolveCallerParticipantIdAsync(boardId);
+
+        var result = await RunOrThrowHubExceptionAsync(() => voteService.RemoveVoteAsync(boardId, postItId, callerId));
+
+        await Clients
+            .Group(boardId.ToString())
+            .SendAsync("VoteChanged", new { postItId = result.PostItId, nombreVotes = result.NombreVotes });
+        await Clients
+            .Caller.SendAsync(
+                "MonVoteChanged",
+                new
+                {
+                    postItId = result.PostItId,
+                    voteDuParticipant = false,
+                    votesRestants = result.VotesRestants,
                 }
             );
     }

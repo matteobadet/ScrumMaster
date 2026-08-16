@@ -19,7 +19,15 @@ public record ThemeRefDto(Guid Id, string Nom);
 
 public record ColonneDto(Guid Id, string Intitule, int Ordre);
 
-public record PostItDto(Guid Id, Guid ColonneId, string Texte, string Auteur, Guid AuteurParticipantId, int NombreVotes);
+public record PostItDto(
+    Guid Id,
+    Guid ColonneId,
+    string Texte,
+    string Auteur,
+    Guid AuteurParticipantId,
+    int NombreVotes,
+    bool VoteDuParticipant
+);
 
 public record ParticipantDto(Guid Id, string NomAffiche, string Role);
 
@@ -29,6 +37,7 @@ public record BoardStateDto(
     string Iteration,
     string Statut,
     int MaxVotesParParticipant,
+    int? MesVotesRestants,
     ThemeRefDto Theme,
     IReadOnlyList<ColonneDto> Colonnes,
     IReadOnlyList<PostItDto> PostIts,
