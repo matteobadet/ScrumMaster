@@ -8,6 +8,7 @@ import { ThemeEditor, buildColonnesPersonnalisees } from '../components/ThemeEdi
 import { EtapeMiniJeuMeteo } from '../components/EtapeMiniJeuMeteo';
 import { EtapeMiniJeuRoti } from '../components/EtapeMiniJeuRoti';
 import { EtapePollPersonnalise } from '../components/EtapePollPersonnalise';
+import { PointDeSprintPanel } from '../components/PointDeSprintPanel';
 import type { EtapeState, ThemeSelection, ThemeSummary } from '../types';
 
 const TYPE_LABELS: Record<EtapeState['type'], string> = {
@@ -31,6 +32,7 @@ export function BoardPage() {
   const [showThemeEditor, setShowThemeEditor] = useState(false);
   const [themeSelection, setThemeSelection] = useState<ThemeSelection>({ kind: 'predefined', themeId: '' });
   const [themeError, setThemeError] = useState<string | null>(null);
+  const [showPointDeSprint, setShowPointDeSprint] = useState(false);
 
   useEffect(() => {
     boardsApi
@@ -188,6 +190,13 @@ export function BoardPage() {
           Lien à partager :{' '}
           <a href={`${window.location.origin}/join/${boardId}`}>{`${window.location.origin}/join/${boardId}`}</a>
         </p>
+
+        <button type="button" onClick={() => setShowPointDeSprint((v) => !v)}>
+          {showPointDeSprint ? 'Masquer le point de sprint' : 'Point de sprint'}
+        </button>
+        {showPointDeSprint && boardId && (
+          <PointDeSprintPanel boardId={boardId} participantId={participant!.participantId} />
+        )}
 
         {board.etapes.length > 1 && (
           <ol className="etape-stepper">

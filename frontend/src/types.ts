@@ -182,3 +182,19 @@ export interface IterationAzureDevOps {
   cheminIteration: string;
   enCours: boolean;
 }
+
+/** Répartition par état pour un type de work item (specs/009-sprint-review-stats). */
+export interface RepartitionType {
+  type: string;
+  aFaire: number;
+  enCours: number;
+  termine: number;
+}
+
+/** Statistiques de sprint calculées à la demande depuis Azure DevOps (specs/009-sprint-review-stats). */
+export interface PointDeSprint {
+  iteration: string;
+  repartitionParType: RepartitionType[];
+  totalPlanifie: number;
+  totalTermine: number;
+}

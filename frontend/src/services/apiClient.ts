@@ -21,7 +21,14 @@ async function request<TResponse>(path: string, init?: RequestInit): Promise<TRe
 
   if (!response.ok) {
     const body = await response.text();
-    throw new ApiError(response.status, body || response.statusText);
+    let message = body || response.statusText;
+    try {
+      const parsed = JSON.parse(body) as { message?: string };
+      message = parsed.message || message;
+    } catch {
+      // Corps non-JSON : on garde le texte brut tel quel.
+    }
+    throw new ApiError(response.status, message);
   }
 
   if (response.status === 204) {

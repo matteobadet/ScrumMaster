@@ -234,14 +234,29 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
         ({ etapeId, participantId: repondantId, nomAffiche, reponse }: ReponseMiniJeuChangeeEvent) => {
           setBoard((current) =>
             current
-              ? updateEtapeById(current, etapeId, (etape) => ({
-                  ...etape,
-                  reponsesMeteo: [
-                    ...(etape.reponsesMeteo ?? []).filter((r) => r.participantId !== repondantId),
-                    { participantId: repondantId, nomAffiche, humeur: reponse },
-                  ],
-                  monHumeur: repondantId === participantId ? reponse : etape.monHumeur,
-                }))
+              ? updateEtapeById(current, etapeId, (etape) =>
+                  // Le type de mini-jeu (Météo/ROTI) détermine quel champ de la réponse patcher
+                  // (union étiquetée, specs/008-roti-mini-jeu) — sinon la réponse est bien
+                  // enregistrée côté serveur mais n'apparaît jamais tant que le board n'est pas
+                  // resynchronisé manuellement.
+                  etape.miniJeu?.typeInterne === 'roti'
+                    ? {
+                        ...etape,
+                        reponsesRoti: [
+                          ...(etape.reponsesRoti ?? []).filter((r) => r.participantId !== repondantId),
+                          { participantId: repondantId, nomAffiche, niveau: reponse },
+                        ],
+                        monNiveauRoti: repondantId === participantId ? reponse : etape.monNiveauRoti,
+                      }
+                    : {
+                        ...etape,
+                        reponsesMeteo: [
+                          ...(etape.reponsesMeteo ?? []).filter((r) => r.participantId !== repondantId),
+                          { participantId: repondantId, nomAffiche, humeur: reponse },
+                        ],
+                        monHumeur: repondantId === participantId ? reponse : etape.monHumeur,
+                      },
+                )
               : current,
           );
         },

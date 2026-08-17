@@ -71,7 +71,7 @@ public class AzureDevOpsClient(HttpClient httpClient)
         var detailsRequest = CreerRequete(
             HttpMethod.Get,
             organisation,
-            $"_apis/wit/workitems?ids={string.Join(',', ids)}&fields=System.Title&api-version=7.1",
+            $"_apis/wit/workitems?ids={string.Join(',', ids)}&fields=System.Title,System.WorkItemType,System.State&api-version=7.1",
             pat
         );
         var detailsResponse = await httpClient.SendAsync(detailsRequest, cancellationToken);
@@ -79,9 +79,44 @@ public class AzureDevOpsClient(HttpClient httpClient)
         var lot = await detailsResponse.Content.ReadFromJsonAsync<AzureDevOpsWorkItemsBatchDto>(JsonOptions, cancellationToken);
 
         return (lot?.Value ?? [])
-            .Select(w => new AzureDevOpsWorkItemSummary(w.Id, w.Fields.TryGetValue("System.Title", out var titre) ? titre?.ToString() ?? string.Empty : string.Empty))
+            .Select(w => new AzureDevOpsWorkItemSummary(
+                w.Id,
+                ObtenirChamp(w.Fields, "System.Title"),
+                ObtenirChamp(w.Fields, "System.WorkItemType"),
+                ObtenirChamp(w.Fields, "System.State")
+            ))
             .ToList();
     }
+
+    /// <summary>
+    /// Mapping état→catégorie normalisée pour un type de work item donné (specs/009-sprint-review-
+    /// stats, research.md#1) — indépendant du modèle de processus de l'équipe.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<string, AzureDevOpsEtatCategorie>> ObtenirEtatsAsync(
+        string organisation,
+        string projet,
+        string pat,
+        string type,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var request = CreerRequete(
+            HttpMethod.Get,
+            organisation,
+            $"{Uri.EscapeDataString(projet)}/_apis/wit/workitemtypes/{Uri.EscapeDataString(type)}/states?api-version=7.1",
+            pat
+        );
+        var response = await httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var etats = await response.Content.ReadFromJsonAsync<AzureDevOpsWorkItemStatesResponseDto>(JsonOptions, cancellationToken);
+
+        return (etats?.Value ?? [])
+            .Where(e => Enum.TryParse<AzureDevOpsEtatCategorie>(e.Category, ignoreCase: true, out _))
+            .ToDictionary(e => e.Name, e => Enum.Parse<AzureDevOpsEtatCategorie>(e.Category, ignoreCase: true));
+    }
+
+    private static string ObtenirChamp(Dictionary<string, object> champs, string nom) =>
+        champs.TryGetValue(nom, out var valeur) ? valeur?.ToString() ?? string.Empty : string.Empty;
 
     /// <summary>Crée un work item de type "Task" avec le titre donné (US4, FR-009).</summary>
     public async Task<int> CreerWorkItemAsync(

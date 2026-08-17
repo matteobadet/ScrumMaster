@@ -14,6 +14,10 @@ public record PostItImporteResult(Guid Id, Guid ColonneId, string Texte, string 
 
 public record PostItExporteResult(Guid PostItId, int WorkItemId);
 
+public record RepartitionTypeResult(string Type, int AFaire, int EnCours, int Termine);
+
+public record PointDeSprintResult(string Iteration, IReadOnlyList<RepartitionTypeResult> RepartitionParType, int TotalPlanifie, int TotalTermine);
+
 /// <summary>
 /// Sélection guidée de l'Area Path/Iteration (US2), import de work items (US3) et export de
 /// post-its (US4) — voir specs/005-azure-devops-boards.
@@ -134,6 +138,94 @@ public class AzureDevOpsBoardService(ScrumMasterDbContext db, AzureDevOpsClient 
         await db.SaveChangesAsync();
 
         return new PostItExporteResult(postIt.Id, workItemId);
+    }
+
+    /// <summary>
+    /// Statistiques de l'Iteration du board, calculées à la demande (specs/009-sprint-review-stats).
+    /// Ouvert à tout participant, sans exiger que le board soit encore actif (FR-001, research.md#5).
+    /// </summary>
+    public async Task<PointDeSprintResult> ObtenirPointDeSprintAsync(Guid boardId, Guid callerParticipantId)
+    {
+        var board = await ObtenirBoardPourParticipantAsync(boardId, callerParticipantId);
+        var configuration = await db.ConfigurationsAzureDevOps.FirstOrDefaultAsync(c => c.AreaPath == board.AreaPath);
+        if (configuration is null)
+        {
+            throw new DomainValidationException("Cette équipe n'a pas d'accès Azure DevOps configuré.");
+        }
+
+        var pat = Dechiffrer(configuration);
+
+        IReadOnlyList<AzureDevOpsWorkItemSummary> workItems;
+        IReadOnlyDictionary<string, IReadOnlyDictionary<string, AzureDevOpsEtatCategorie>> etatsParType;
+        try
+        {
+            workItems = await client.ListerWorkItemsAsync(configuration.Organisation, configuration.Projet, pat, board.Iteration);
+
+            var etats = new Dictionary<string, IReadOnlyDictionary<string, AzureDevOpsEtatCategorie>>();
+            foreach (var type in workItems.Select(w => w.Type).Distinct())
+            {
+                etats[type] = await client.ObtenirEtatsAsync(configuration.Organisation, configuration.Projet, pat, type);
+            }
+
+            etatsParType = etats;
+        }
+        catch (HttpRequestException)
+        {
+            throw new DomainUpstreamException("Impossible de récupérer les statistiques depuis Azure DevOps pour le moment.");
+        }
+
+        var classifies = workItems
+            .Select(w => new
+            {
+                Bucket = TypeBucket(w.Type),
+                Categorie = etatsParType.TryGetValue(w.Type, out var etats) && etats.TryGetValue(w.Etat, out var categorie) ? categorie : (AzureDevOpsEtatCategorie?)null,
+            })
+            .Where(w => w.Categorie is { } categorie && categorie != AzureDevOpsEtatCategorie.Removed)
+            .ToList();
+
+        var repartition = classifies
+            .GroupBy(w => w.Bucket)
+            .Select(g => new RepartitionTypeResult(
+                g.Key,
+                g.Count(w => w.Categorie == AzureDevOpsEtatCategorie.Proposed),
+                g.Count(w => w.Categorie is AzureDevOpsEtatCategorie.InProgress or AzureDevOpsEtatCategorie.Resolved),
+                g.Count(w => w.Categorie == AzureDevOpsEtatCategorie.Completed)
+            ))
+            .ToList();
+
+        return new PointDeSprintResult(
+            board.Iteration,
+            repartition,
+            classifies.Count,
+            classifies.Count(w => w.Categorie == AzureDevOpsEtatCategorie.Completed)
+        );
+    }
+
+    private static string TypeBucket(string type) =>
+        type switch
+        {
+            "Task" => "Task",
+            "User Story" => "UserStory",
+            _ => "Autres",
+        };
+
+    /// <summary>Résout le board pour tout participant (facilitateur ou non), sans exiger qu'il soit
+    /// encore actif — pour les consultations en lecture seule (specs/009-sprint-review-stats).</summary>
+    private async Task<Board> ObtenirBoardPourParticipantAsync(Guid boardId, Guid callerParticipantId)
+    {
+        var board = await db.Boards.FirstOrDefaultAsync(b => b.Id == boardId);
+        if (board is null)
+        {
+            throw new DomainNotFoundException($"Board {boardId} introuvable.");
+        }
+
+        var caller = await db.Participants.FirstOrDefaultAsync(p => p.Id == callerParticipantId && p.BoardId == boardId);
+        if (caller is null)
+        {
+            throw new DomainNotFoundException($"Participant {callerParticipantId} introuvable sur ce board.");
+        }
+
+        return board;
     }
 
     private async Task<ConfigurationAzureDevOps> ObtenirConfigurationAsync(string areaPath)

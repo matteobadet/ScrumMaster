@@ -6,7 +6,7 @@ namespace ScrumMaster.Api.Controllers;
 
 [ApiController]
 [Route("api/boards")]
-public class BoardsController(BoardService boardService, ParticipantService participantService) : ControllerBase
+public class BoardsController(BoardService boardService, ParticipantService participantService, AzureDevOpsBoardService azureDevOpsBoardService) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<CreateBoardResponse>> CreateBoard(CreateBoardRequest request)
@@ -27,5 +27,19 @@ public class BoardsController(BoardService boardService, ParticipantService part
     {
         var result = await participantService.JoinAsync(boardId, request.NomAffiche);
         return Created(string.Empty, new JoinBoardResponse(result.ParticipantId, result.Role));
+    }
+
+    [HttpGet("{boardId:guid}/point-de-sprint")]
+    public async Task<ActionResult<PointDeSprintDto>> ObtenirPointDeSprint(Guid boardId, [FromQuery] Guid asParticipantId)
+    {
+        var result = await azureDevOpsBoardService.ObtenirPointDeSprintAsync(boardId, asParticipantId);
+        return Ok(
+            new PointDeSprintDto(
+                result.Iteration,
+                result.RepartitionParType.Select(r => new RepartitionTypeDto(r.Type, r.AFaire, r.EnCours, r.Termine)).ToList(),
+                result.TotalPlanifie,
+                result.TotalTermine
+            )
+        );
     }
 }

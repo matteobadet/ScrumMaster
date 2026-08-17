@@ -9,6 +9,7 @@ import type {
   IterationAzureDevOps,
   JoinBoardResponse,
   MiniJeuRef,
+  PointDeSprint,
   ThemeSummary,
 } from '../types';
 
@@ -28,4 +29,6 @@ export const boardsApi = {
   listerEquipesAvecAzureDevOps: () => apiClient.get<EquipeAzureDevOps[]>('/api/equipes/avec-azure-devops'),
   obtenirIterationsAzureDevOps: (areaPath: string) =>
     apiClient.get<IterationAzureDevOps[]>(`/api/equipes/${areaPath}/azure-devops/iterations`),
+  obtenirPointDeSprint: (boardId: string, participantId: string) =>
+    apiClient.get<PointDeSprint>(`/api/boards/${boardId}/point-de-sprint?asParticipantId=${participantId}`),
 };
