@@ -6,6 +6,7 @@ import { boardsApi } from '../services/boardsApi';
 import { Colonne } from '../components/Colonne';
 import { ThemeEditor, buildColonnesPersonnalisees } from '../components/ThemeEditor';
 import { EtapeMiniJeuMeteo } from '../components/EtapeMiniJeuMeteo';
+import { EtapeMiniJeuRoti } from '../components/EtapeMiniJeuRoti';
 import { EtapePollPersonnalise } from '../components/EtapePollPersonnalise';
 import type { EtapeState, ThemeSelection, ThemeSummary } from '../types';
 
@@ -151,7 +152,9 @@ export function BoardPage() {
       case 'ColonnesEtPostIts':
         return renderColonnesEtPostIts(etape, readOnly);
       case 'MiniJeu':
-        return (
+        return etape.miniJeu?.typeInterne === 'roti' ? (
+          <EtapeMiniJeuRoti etape={etape} readOnly={readOnly} onRepondre={(niveau) => invoke('RepondreMiniJeu', boardId, etape.id, niveau)} />
+        ) : (
           <EtapeMiniJeuMeteo etape={etape} readOnly={readOnly} onRepondre={(humeur) => invoke('RepondreMiniJeu', boardId, etape.id, humeur)} />
         );
       case 'PollPersonnalise':

@@ -7,8 +7,9 @@ namespace ScrumMaster.Api.Services;
 public record RepondreMiniJeuResult(Guid ParticipantId, string NomAffiche, string Reponse);
 
 /// <summary>
-/// Réponse à une étape de type Mini-jeu (US2, specs/006-systeme-extensions-etapes). Un seul
-/// mini-jeu pour ce MVP ("Météo d'équipe", research.md#6).
+/// Réponse à une étape de type Mini-jeu (US2, specs/006-systeme-extensions-etapes). Le mini-jeu
+/// concret ("Météo d'équipe" ou "ROTI") est résolu via <see cref="MiniJeuCatalogue.TypeInterne"/>
+/// (specs/008-roti-mini-jeu, research.md#4).
 /// </summary>
 public class MiniJeuService(ScrumMasterDbContext db)
 {
@@ -17,6 +18,15 @@ public class MiniJeuService(ScrumMasterDbContext db)
         var etape = await GetEtapeActiveAsync(boardId, etapeId);
         var participant = await GetParticipantAsync(boardId, participantId);
 
+        return etape.MiniJeuCatalogue?.TypeInterne switch
+        {
+            "roti" => await RepondreRotiAsync(etapeId, participantId, participant, reponse),
+            _ => await RepondreMeteoAsync(etapeId, participantId, participant, reponse),
+        };
+    }
+
+    private async Task<RepondreMiniJeuResult> RepondreMeteoAsync(Guid etapeId, Guid participantId, Participant participant, string reponse)
+    {
         if (!Enum.TryParse<HumeurMeteo>(reponse, ignoreCase: true, out var humeur))
         {
             throw new DomainValidationException($"Réponse \"{reponse}\" non reconnue pour ce mini-jeu.");
@@ -46,9 +56,40 @@ public class MiniJeuService(ScrumMasterDbContext db)
         return new RepondreMiniJeuResult(participantId, participant.NomAffiche, humeur.ToString());
     }
 
+    private async Task<RepondreMiniJeuResult> RepondreRotiAsync(Guid etapeId, Guid participantId, Participant participant, string reponse)
+    {
+        if (!Enum.TryParse<NiveauRoti>(reponse, ignoreCase: true, out var niveau))
+        {
+            throw new DomainValidationException($"Réponse \"{reponse}\" non reconnue pour ce mini-jeu.");
+        }
+
+        var existante = await db.ReponsesRoti.FirstOrDefaultAsync(r => r.EtapeId == etapeId && r.ParticipantId == participantId);
+        if (existante is null)
+        {
+            db.ReponsesRoti.Add(
+                new ReponseRoti
+                {
+                    EtapeId = etapeId,
+                    ParticipantId = participantId,
+                    Niveau = niveau,
+                    DateReponse = DateTimeOffset.UtcNow,
+                }
+            );
+        }
+        else
+        {
+            existante.Niveau = niveau;
+            existante.DateReponse = DateTimeOffset.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+
+        return new RepondreMiniJeuResult(participantId, participant.NomAffiche, niveau.ToString());
+    }
+
     private async Task<Etape> GetEtapeActiveAsync(Guid boardId, Guid etapeId)
     {
-        var etape = await db.Etapes.FirstOrDefaultAsync(e => e.Id == etapeId && e.BoardId == boardId);
+        var etape = await db.Etapes.Include(e => e.MiniJeuCatalogue).FirstOrDefaultAsync(e => e.Id == etapeId && e.BoardId == boardId);
         if (etape is null)
         {
             throw new DomainNotFoundException($"Étape {etapeId} introuvable sur ce board.");

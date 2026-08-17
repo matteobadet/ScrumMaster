@@ -180,6 +180,17 @@ textarea:hover {
   border-color: var(--border-strong);
 }
 
+/*
+ * La liste déroulante d'un <select> est un popup natif : certains navigateurs propagent la
+ * couleur de texte du <select> (var(--text-h), claire en thème sombre) sans forcément assombrir
+ * le fond du popup en retour, ce qui rend les options illisibles (texte clair sur fond clair).
+ * On fixe ce popup en clair de façon inconditionnelle, cohérent avec le rendu natif observé.
+ */
+option {
+  color: #1a1625;
+  background: #ffffff;
+}
+
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,

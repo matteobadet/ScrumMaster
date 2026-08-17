@@ -204,15 +204,31 @@ que toutes ses colonnes affichent une couleur et une illustration dès la créat
   chaque navigateur participant la charge directement depuis son URL d'origine, comme n'importe
   quelle image externe référencée sur une page web. Aucune infrastructure de stockage de fichiers
   n'est donc nécessaire pour cette feature.
-- Cette feature ne couvre pas de question directrice affichée par colonne (texte distinct sous
-  l'illustration, visible sur la capture d'écran de référence) — reste hors périmètre ; le bloc
-  "Contexte" du thème entier (specs/004-themes-narratifs) continue de porter ce rôle narratif au
-  niveau du board dans son ensemble, pas par colonne.
 - Cette feature se limite aux colonnes d'une étape de type "Colonnes et post-its"
   (specs/006-systeme-extensions-etapes) — elle ne couvre pas d'habillage visuel pour les étapes de
   type Mini-jeu ou Poll personnalisé.
-- Aucune vérification automatique de contraste ou d'accessibilité des couleurs choisies n'est
-  effectuée par le système ; le choix d'une combinaison lisible reste à la discrétion du
-  facilitateur.
+- Aucune vérification automatique de contraste ou d'accessibilité des *couleurs* choisies n'est
+  effectuée par le système à la saisie ; le choix d'une combinaison lisible reste à la discrétion
+  du facilitateur (le texte affiché par-dessus une couleur de colonne est en revanche
+  automatiquement rendu lisible côté client — voir Amendement ci-dessous).
 - Les thèmes et boards créés avant cette feature restent utilisables sans migration de contenu :
   leurs colonnes, sans couleur ni illustration associée, conservent leur apparence actuelle.
+
+## Amendement (2026-08-17, retour utilisateur post-implémentation)
+
+- **Sous-titre de colonne** : l'Assumption initiale excluant la question directrice par colonne
+  est revue — un attribut facultatif `SousTitre` (≤150 caractères) est ajouté à `Colonne`, affiché
+  sous l'intitulé et l'illustration. Disponible pour les thèmes prédéfinis et personnalisés, selon
+  le même mécanisme que `Couleur`/`UrlIllustration`. Le thème prédéfini "La rétro du randonneur"
+  reprend les questions directrices de la capture d'écran de référence originale. Le bloc
+  "Contexte" du thème entier (specs/004-themes-narratifs) continue par ailleurs de porter le
+  narratif au niveau du board dans son ensemble.
+- **Lisibilité automatique du texte de colonne** : le titre et le sous-titre d'une colonne
+  calculent désormais une couleur de texte contrastante à partir de `Couleur` (luminance perçue),
+  plutôt que d'utiliser la couleur de texte fixe du thème de l'app — corrige un défaut découvert en
+  test manuel où certaines couleurs de colonne rendaient le titre illisible. N'est pas une
+  vérification/rejet à la saisie (l'Assumption ci-dessus reste vraie pour la couleur elle-même) :
+  c'est un ajustement purement visuel au rendu.
+- **Lisibilité des listes déroulantes natives** : correction d'un défaut de contraste des options
+  de `<select>` (ex : "Déplacer vers"), sans lien avec l'habillage de colonne mais découvert dans le
+  même passage de test manuel.

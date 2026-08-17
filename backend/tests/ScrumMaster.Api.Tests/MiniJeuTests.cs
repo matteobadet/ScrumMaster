@@ -112,7 +112,7 @@ public class MiniJeuTests : IClassFixture<TestWebApplicationFactory>
     {
         var response = await _client.GetAsync("/api/mini-jeux");
         var miniJeux = await response.Content.ReadFromJsonAsync<List<MiniJeuRefDto>>();
-        return miniJeux!.Single().Id;
+        return miniJeux!.Single(m => m.TypeInterne == "meteo-equipe").Id;
     }
 
     private async Task<BoardStateDto> GetBoardStateAsync(Guid boardId, Guid participantId)

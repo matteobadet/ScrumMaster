@@ -115,7 +115,7 @@ export function CreateBoardPage() {
 
     let etapes: EtapeRequest[] | undefined;
     if (sequenceMode) {
-      const built = buildEtapeRequests(etapeBuilders);
+      const built = buildEtapeRequests(etapeBuilders, miniJeux);
       if (built.error) {
         setError(built.error);
         return;

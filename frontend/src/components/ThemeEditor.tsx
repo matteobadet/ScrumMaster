@@ -7,11 +7,11 @@ interface ThemeEditorProps {
 }
 
 function colonneVide(): ColonneSummaire {
-  return { intitule: '', couleur: null, urlIllustration: null };
+  return { intitule: '', couleur: null, urlIllustration: null, sousTitre: null };
 }
 
 /** URL d'illustration valide si HTTPS (FR-009, cohérent avec la validation serveur — retour immédiat côté client). */
-function urlIllustrationInvalide(url: string | null): boolean {
+export function urlIllustrationInvalide(url: string | null): boolean {
   if (!url) {
     return false;
   }
@@ -27,7 +27,9 @@ function urlIllustrationInvalide(url: string | null): boolean {
  * rejette si une URL d'illustration non vide n'est pas en https:// (FR-009).
  */
 export function buildColonnesPersonnalisees(colonnes: ColonneSummaire[]): { colonnes: ColonneSummaire[] } | { error: string } {
-  const nonVides = colonnes.filter((c) => c.intitule.trim().length > 0).map((c) => ({ ...c, intitule: c.intitule.trim() }));
+  const nonVides = colonnes
+    .filter((c) => c.intitule.trim().length > 0)
+    .map((c) => ({ ...c, intitule: c.intitule.trim(), sousTitre: c.sousTitre?.trim() || null }));
 
   if (nonVides.length === 0) {
     return { error: 'Un thème personnalisé doit comporter au moins une colonne.' };
@@ -124,6 +126,15 @@ export function ThemeEditor({ themes, value, onChange }: ThemeEditorProps) {
                   onChange={(e) => updateColonne(index, { intitule: e.target.value })}
                   placeholder={`Colonne ${index + 1}`}
                 />
+                <label>
+                  Sous-titre (facultatif)
+                  <input
+                    value={colonne.sousTitre ?? ''}
+                    onChange={(e) => updateColonne(index, { sousTitre: e.target.value || null })}
+                    placeholder="Qu'est-ce qui...?"
+                    maxLength={150}
+                  />
+                </label>
                 <label>
                   Couleur (facultatif)
                   <input

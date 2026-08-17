@@ -47,6 +47,10 @@ public class Etape
 
     public List<ReponseMeteoEquipe> ReponsesMeteo { get; set; } = new();
 
+    public List<ReponseRoti> ReponsesRoti { get; set; } = new();
+
+    public List<EtapeRotiVisuel> VisuelsRoti { get; set; } = new();
+
     // Poll personnalisé (Type == PollPersonnalise)
     public string? Question { get; set; }
 

@@ -269,3 +269,26 @@ Task: "Étendre le modèle Colonne, restructurer les DTOs et migrer la base (bac
 - Chaque story doit rester indépendamment testable (voir "Independent Test" de chaque phase)
 - Committer après chaque tâche ou groupe logique de tâches
 - S'arrêter à chaque checkpoint pour valider la story avant de poursuivre
+
+## Suite (2026-08-17, retour utilisateur post-implémentation)
+
+Hors des 21 tâches ci-dessus, trois correctifs/ajouts appliqués directement suite à un test manuel
+en navigateur (voir spec.md, section Amendement) :
+
+- Ajout de `Colonne.SousTitre` (≤150 caractères), même mécanisme que `Couleur`/`UrlIllustration` —
+  modèle, migration additive, DTOs (paramètre optionnel pour ne pas casser les tests existants),
+  validation de longueur, seed du thème "La rétro du randonneur" avec les questions directrices
+  d'origine (nécessitant une correction manuelle en base de dev pour les copies de thème déjà
+  créées pendant la session, la table `Colonnes` n'étant pas re-seedée automatiquement), UI de
+  saisie (`ThemeEditor.tsx`) et d'affichage (`Colonne.tsx`) — 2 nouveaux tests d'intégration dans
+  `ThemeVisuelColonneTests.cs`.
+- Correction de contraste : le titre/sous-titre d'une colonne calcule désormais sa couleur de texte
+  à partir de la luminance perçue de `Couleur` (`Colonne.tsx`), au lieu d'utiliser la couleur de
+  texte fixe du thème de l'app — sans quoi certaines couleurs de colonne rendaient le titre
+  illisible.
+- Correction de contraste des options natives de `<select>` (`index.css`), sans lien avec
+  l'habillage de colonne.
+
+Suite complète après ces correctifs : 79/79 tests backend passent, `tsc --noEmit` sans erreur,
+revérifié en navigateur (thème "La rétro du randonneur" complet avec sous-titres, dropdown
+"Déplacer vers" lisible, contraste correct sur fond clair et foncé).

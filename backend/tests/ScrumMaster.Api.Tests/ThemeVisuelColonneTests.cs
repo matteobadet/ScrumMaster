@@ -44,6 +44,55 @@ public class ThemeVisuelColonneTests : IClassFixture<TestWebApplicationFactory>
     }
 
     [Fact]
+    public async Task CreateBoard_AvecSousTitresDeColonnes_LesRenvoieEtLaissePasVideLesColonnesSans()
+    {
+        var request = new CreateBoardRequest(
+            "Krypton",
+            "Sprint-138",
+            null,
+            new ThemePersonnaliseDto(
+                "Mon thème",
+                null,
+                null,
+                [
+                    new ColonneSummaireDto("Start", null, null, "Qu'est-ce qu'on continue ?"),
+                    new ColonneSummaireDto("Stop", null, null),
+                ]
+            ),
+            null,
+            "Alex"
+        );
+
+        var createResponse = await _client.PostAsJsonAsync("/api/boards", request);
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = await createResponse.Content.ReadFromJsonAsync<CreateBoardResponse>();
+
+        var state = await GetBoardStateAsync(created!.BoardId);
+        var colonnes = state.Etapes[0].Colonnes!;
+
+        Assert.Equal("Qu'est-ce qu'on continue ?", colonnes.Single(c => c.Intitule == "Start").SousTitre);
+        Assert.Null(colonnes.Single(c => c.Intitule == "Stop").SousTitre);
+    }
+
+    [Fact]
+    public async Task CreateBoard_AvecSousTitreTropLong_Retourne400()
+    {
+        var sousTitreTropLong = new string('a', 151);
+        var request = new CreateBoardRequest(
+            "Krypton",
+            "Sprint-138",
+            null,
+            new ThemePersonnaliseDto("Mon thème", null, null, [new ColonneSummaireDto("Start", null, null, sousTitreTropLong)]),
+            null,
+            "Alex"
+        );
+
+        var response = await _client.PostAsJsonAsync("/api/boards", request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task CreateBoard_AvecCouleurTropLongue_Retourne400()
     {
         var couleurTropLongue = new string('a', 31);
@@ -136,6 +185,7 @@ public class ThemeVisuelColonneTests : IClassFixture<TestWebApplicationFactory>
         Assert.NotEmpty(randonneur!.Colonnes);
         Assert.All(randonneur.Colonnes, c => Assert.NotNull(c.Couleur));
         Assert.All(randonneur.Colonnes, c => Assert.NotNull(c.UrlIllustration));
+        Assert.All(randonneur.Colonnes, c => Assert.NotNull(c.SousTitre));
     }
 
     [Fact]
@@ -156,6 +206,7 @@ public class ThemeVisuelColonneTests : IClassFixture<TestWebApplicationFactory>
         Assert.Equal(randonneur.Colonnes.Count, colonnes.Count);
         Assert.All(colonnes, c => Assert.NotNull(c.Couleur));
         Assert.All(colonnes, c => Assert.NotNull(c.UrlIllustration));
+        Assert.All(colonnes, c => Assert.NotNull(c.SousTitre));
     }
 
     private async Task<BoardStateDto> GetBoardStateAsync(Guid boardId)

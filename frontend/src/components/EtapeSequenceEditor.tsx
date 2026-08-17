@@ -1,5 +1,14 @@
 import type { EtapeRequest, MiniJeuRef, ThemeSelection, ThemeSummary } from '../types';
-import { ThemeEditor, buildColonnesPersonnalisees } from './ThemeEditor';
+import { ThemeEditor, buildColonnesPersonnalisees, urlIllustrationInvalide } from './ThemeEditor';
+
+/** Niveaux de l'échelle ROTI (specs/008-roti-mini-jeu, data-model.md), pour la personnalisation par niveau. */
+const NIVEAUX_ROTI: { valeur: string; libelle: string }[] = [
+  { valeur: 'PerteDeTemps', libelle: 'Perte de temps' },
+  { valeur: 'PeuRentable', libelle: 'Peu rentable' },
+  { valeur: 'MoyennementRentable', libelle: 'Moyennement rentable' },
+  { valeur: 'Rentable', libelle: 'Rentable' },
+  { valeur: 'TresRentable', libelle: 'Très rentable' },
+];
 
 export interface EtapeBuilder {
   id: string;
@@ -8,6 +17,8 @@ export interface EtapeBuilder {
   miniJeuCatalogueId: string;
   question: string;
   options: string[];
+  /** URL d'illustration personnalisée par niveau ROTI (specs/008-roti-mini-jeu, US2) ; vide si non personnalisé. */
+  rotiVisuels: Record<string, string>;
 }
 
 function genererId(): string {
@@ -27,11 +38,15 @@ export function creerEtapeBuilder(
     miniJeuCatalogueId: miniJeux[0]?.id ?? '',
     question: '',
     options: ['', ''],
+    rotiVisuels: {},
   };
 }
 
 /** Convertit la séquence composée en requête API, ou retourne une erreur de validation côté client. */
-export function buildEtapeRequests(etapes: EtapeBuilder[]): { requests: EtapeRequest[]; error?: undefined } | { error: string } {
+export function buildEtapeRequests(
+  etapes: EtapeBuilder[],
+  miniJeux: MiniJeuRef[],
+): { requests: EtapeRequest[]; error?: undefined } | { error: string } {
   const requests: EtapeRequest[] = [];
 
   for (const etape of etapes) {
@@ -57,7 +72,23 @@ export function buildEtapeRequests(etapes: EtapeBuilder[]): { requests: EtapeReq
       if (!etape.miniJeuCatalogueId) {
         return { error: 'Un mini-jeu doit être choisi pour chaque étape de type Mini-jeu.' };
       }
-      requests.push({ type: 'MiniJeu', miniJeuCatalogueId: etape.miniJeuCatalogueId });
+
+      const estRoti = miniJeux.find((m) => m.id === etape.miniJeuCatalogueId)?.typeInterne === 'roti';
+      const rotiPersonnalisations = estRoti
+        ? Object.entries(etape.rotiVisuels)
+            .filter(([, url]) => url.trim().length > 0)
+            .map(([niveau, url]) => ({ niveau, urlIllustration: url.trim() }))
+        : [];
+
+      if (rotiPersonnalisations.some((v) => urlIllustrationInvalide(v.urlIllustration))) {
+        return { error: "L'illustration d'un niveau ROTI doit être une URL en https://." };
+      }
+
+      requests.push({
+        type: 'MiniJeu',
+        miniJeuCatalogueId: etape.miniJeuCatalogueId,
+        rotiPersonnalisations: rotiPersonnalisations.length > 0 ? rotiPersonnalisations : null,
+      });
     } else {
       const question = etape.question.trim();
       if (!question) {
@@ -118,6 +149,10 @@ export function EtapeSequenceEditor({ etapes, themes, miniJeux, onChange }: Etap
     update(etapeIndex, { options: etapes[etapeIndex].options.filter((_, i) => i !== optionIndex) });
   }
 
+  function updateRotiVisuel(etapeIndex: number, niveau: string, url: string) {
+    update(etapeIndex, { rotiVisuels: { ...etapes[etapeIndex].rotiVisuels, [niveau]: url } });
+  }
+
   return (
     <fieldset className="etape-sequence-editor">
       <legend>Séquence d'étapes</legend>
@@ -157,6 +192,27 @@ export function EtapeSequenceEditor({ etapes, themes, miniJeux, onChange }: Etap
               </select>
               {miniJeux.length === 0 && <p role="alert">Aucun mini-jeu disponible dans le catalogue.</p>}
             </label>
+          )}
+
+          {etape.type === 'MiniJeu' && miniJeux.find((m) => m.id === etape.miniJeuCatalogueId)?.typeInterne === 'roti' && (
+            <div className="roti-personnalisation">
+              <p>Visuel personnalisé par niveau (facultatif — sinon emoji par défaut)</p>
+              {NIVEAUX_ROTI.map((niveau) => {
+                const url = etape.rotiVisuels[niveau.valeur] ?? '';
+                const urlInvalide = urlIllustrationInvalide(url || null);
+                return (
+                  <label key={niveau.valeur}>
+                    {niveau.libelle}
+                    <input
+                      value={url}
+                      onChange={(e) => updateRotiVisuel(index, niveau.valeur, e.target.value)}
+                      placeholder="https://…"
+                    />
+                    {urlInvalide && <p role="alert">L'illustration doit être une URL en https://</p>}
+                  </label>
+                );
+              })}
+            </div>
           )}
 
           {etape.type === 'PollPersonnalise' && (

@@ -81,6 +81,11 @@ public class BoardService(ScrumMasterDbContext db, EtapeService etapeService)
             .ThenInclude(e => e.ReponsesMeteo)
             .ThenInclude(r => r.Participant)
             .Include(b => b.Etapes)
+            .ThenInclude(e => e.ReponsesRoti)
+            .ThenInclude(r => r.Participant)
+            .Include(b => b.Etapes)
+            .ThenInclude(e => e.VisuelsRoti)
+            .Include(b => b.Etapes)
             .ThenInclude(e => e.Options)
             .Include(b => b.Etapes)
             .ThenInclude(e => e.Reponses)
@@ -161,7 +166,7 @@ public class BoardService(ScrumMasterDbContext db, EtapeService etapeService)
             theme.Nom,
             theme.Icone,
             theme.Contexte,
-            theme.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre, c.Couleur, c.UrlIllustration)).ToList()
+            theme.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre, c.Couleur, c.UrlIllustration, c.SousTitre)).ToList()
         );
     }
 
@@ -184,7 +189,7 @@ public class BoardService(ScrumMasterDbContext db, EtapeService etapeService)
                     etape.Ordre,
                     etape.Statut.ToString(),
                     new ThemeRefDto(etape.Theme.Id, etape.Theme.Nom, etape.Theme.Icone, etape.Theme.Contexte),
-                    colonnes.Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre, c.Couleur, c.UrlIllustration)).ToList(),
+                    colonnes.Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre, c.Couleur, c.UrlIllustration, c.SousTitre)).ToList(),
                     etape
                         .PostIts.OrderBy(p => p.DateCreation)
                         .Select(p => new PostItDto(
@@ -212,6 +217,10 @@ public class BoardService(ScrumMasterDbContext db, EtapeService etapeService)
                     ? etape.ReponsesMeteo.FirstOrDefault(r => r.ParticipantId == pidMeteo)?.Humeur.ToString()
                     : null;
 
+                var monNiveauRoti = asParticipantId is { } pidRoti
+                    ? etape.ReponsesRoti.FirstOrDefault(r => r.ParticipantId == pidRoti)?.Niveau.ToString()
+                    : null;
+
                 return new EtapeDto(
                     etape.Id,
                     etape.Type.ToString(),
@@ -228,7 +237,12 @@ public class BoardService(ScrumMasterDbContext db, EtapeService etapeService)
                     monHumeur,
                     null,
                     null,
-                    null
+                    null,
+                    etape
+                        .ReponsesRoti.Select(r => new ReponseRotiDto(r.ParticipantId, r.Participant?.NomAffiche ?? string.Empty, r.Niveau.ToString()))
+                        .ToList(),
+                    monNiveauRoti,
+                    etape.VisuelsRoti.Select(v => new NiveauVisuelDto(v.Niveau.ToString(), v.UrlIllustration)).ToList()
                 );
 
             case TypeEtape.PollPersonnalise:

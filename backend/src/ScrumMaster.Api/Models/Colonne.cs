@@ -15,4 +15,7 @@ public class Colonne
     public string? Couleur { get; set; }
 
     public string? UrlIllustration { get; set; }
+
+    /// <summary>Sous-titre/question directrice de la colonne (ex: "Qu'est-ce qui nous a aidé à atteindre notre objectif ?").</summary>
+    public string? SousTitre { get; set; }
 }

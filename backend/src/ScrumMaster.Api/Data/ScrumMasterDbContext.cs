@@ -40,6 +40,10 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
 
     public DbSet<ReponseMeteoEquipe> ReponsesMeteoEquipe => Set<ReponseMeteoEquipe>();
 
+    public DbSet<ReponseRoti> ReponsesRoti => Set<ReponseRoti>();
+
+    public DbSet<EtapeRotiVisuel> VisuelsRoti => Set<EtapeRotiVisuel>();
+
     public DbSet<OptionPollPersonnalise> OptionsPollPersonnalise => Set<OptionPollPersonnalise>();
 
     public DbSet<ReponsePollPersonnalise> ReponsesPollPersonnalise => Set<ReponsePollPersonnalise>();
@@ -68,6 +72,7 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
             entity.Property(e => e.Intitule).IsRequired();
             entity.Property(e => e.Couleur).HasMaxLength(30);
             entity.Property(e => e.UrlIllustration).HasMaxLength(2048);
+            entity.Property(e => e.SousTitre).HasMaxLength(150);
         });
 
         modelBuilder.Entity<Board>(entity =>
@@ -216,6 +221,32 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
                 .HasOne(e => e.Participant)
                 .WithMany()
                 .HasForeignKey(e => e.ParticipantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ReponseRoti>(entity =>
+        {
+            entity.HasKey(e => new { e.EtapeId, e.ParticipantId });
+            entity
+                .HasOne(e => e.Etape)
+                .WithMany(et => et.ReponsesRoti)
+                .HasForeignKey(e => e.EtapeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne(e => e.Participant)
+                .WithMany()
+                .HasForeignKey(e => e.ParticipantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EtapeRotiVisuel>(entity =>
+        {
+            entity.HasKey(e => new { e.EtapeId, e.Niveau });
+            entity.Property(e => e.UrlIllustration).IsRequired().HasMaxLength(2048);
+            entity
+                .HasOne(e => e.Etape)
+                .WithMany(et => et.VisuelsRoti)
+                .HasForeignKey(e => e.EtapeId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

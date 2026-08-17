@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ScrumMaster.Api.Data;
@@ -11,9 +12,11 @@ using ScrumMaster.Api.Data;
 namespace ScrumMaster.Api.Data.Migrations
 {
     [DbContext(typeof(ScrumMasterDbContext))]
-    partial class ScrumMasterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260817202127_AddColonneSousTitre")]
+    partial class AddColonneSousTitre
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -181,24 +184,6 @@ namespace ScrumMaster.Api.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Etapes");
-                });
-
-            modelBuilder.Entity("ScrumMaster.Api.Models.EtapeRotiVisuel", b =>
-                {
-                    b.Property<Guid>("EtapeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Niveau")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UrlIllustration")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
-
-                    b.HasKey("EtapeId", "Niveau");
-
-                    b.ToTable("VisuelsRoti");
                 });
 
             modelBuilder.Entity("ScrumMaster.Api.Models.MiniJeuCatalogue", b =>
@@ -421,27 +406,6 @@ namespace ScrumMaster.Api.Data.Migrations
                     b.ToTable("ReponsesPollPersonnalise");
                 });
 
-            modelBuilder.Entity("ScrumMaster.Api.Models.ReponseRoti", b =>
-                {
-                    b.Property<Guid>("EtapeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ParticipantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("DateReponse")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Niveau")
-                        .HasColumnType("integer");
-
-                    b.HasKey("EtapeId", "ParticipantId");
-
-                    b.HasIndex("ParticipantId");
-
-                    b.ToTable("ReponsesRoti");
-                });
-
             modelBuilder.Entity("ScrumMaster.Api.Models.Theme", b =>
                 {
                     b.Property<Guid>("Id")
@@ -565,17 +529,6 @@ namespace ScrumMaster.Api.Data.Migrations
                     b.Navigation("Theme");
                 });
 
-            modelBuilder.Entity("ScrumMaster.Api.Models.EtapeRotiVisuel", b =>
-                {
-                    b.HasOne("ScrumMaster.Api.Models.Etape", "Etape")
-                        .WithMany("VisuelsRoti")
-                        .HasForeignKey("EtapeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Etape");
-                });
-
             modelBuilder.Entity("ScrumMaster.Api.Models.OptionPollPersonnalise", b =>
                 {
                     b.HasOne("ScrumMaster.Api.Models.Etape", "Etape")
@@ -693,25 +646,6 @@ namespace ScrumMaster.Api.Data.Migrations
                     b.Navigation("Participant");
                 });
 
-            modelBuilder.Entity("ScrumMaster.Api.Models.ReponseRoti", b =>
-                {
-                    b.HasOne("ScrumMaster.Api.Models.Etape", "Etape")
-                        .WithMany("ReponsesRoti")
-                        .HasForeignKey("EtapeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ScrumMaster.Api.Models.Participant", "Participant")
-                        .WithMany()
-                        .HasForeignKey("ParticipantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Etape");
-
-                    b.Navigation("Participant");
-                });
-
             modelBuilder.Entity("ScrumMaster.Api.Models.Vote", b =>
                 {
                     b.HasOne("ScrumMaster.Api.Models.Participant", "Participant")
@@ -763,10 +697,6 @@ namespace ScrumMaster.Api.Data.Migrations
                     b.Navigation("Reponses");
 
                     b.Navigation("ReponsesMeteo");
-
-                    b.Navigation("ReponsesRoti");
-
-                    b.Navigation("VisuelsRoti");
                 });
 
             modelBuilder.Entity("ScrumMaster.Api.Models.PollUtilite", b =>

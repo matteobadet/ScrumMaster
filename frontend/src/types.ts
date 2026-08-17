@@ -3,6 +3,7 @@ export interface ColonneSummaire {
   intitule: string;
   couleur: string | null;
   urlIllustration: string | null;
+  sousTitre: string | null;
 }
 
 export interface ThemeSummary {
@@ -24,6 +25,12 @@ export type ThemeSelection =
   | { kind: 'predefined'; themeId: string }
   | { kind: 'custom'; nom: string; icone: string; contexte: string; colonnes: ColonneSummaire[] };
 
+/** Une personnalisation de visuel de niveau ROTI (specs/008-roti-mini-jeu). */
+export interface NiveauVisuel {
+  niveau: string;
+  urlIllustration: string;
+}
+
 /** Une étape demandée à la composition d'une séquence (US1, specs/006-systeme-extensions-etapes). */
 export interface EtapeRequest {
   type: 'ColonnesEtPostIts' | 'MiniJeu' | 'PollPersonnalise';
@@ -32,6 +39,7 @@ export interface EtapeRequest {
   miniJeuCatalogueId?: string | null;
   question?: string | null;
   options?: string[] | null;
+  rotiPersonnalisations?: NiveauVisuel[] | null;
 }
 
 export interface CreateBoardRequest {
@@ -69,6 +77,7 @@ export interface ColonneState {
   ordre: number;
   couleur: string | null;
   urlIllustration: string | null;
+  sousTitre: string | null;
 }
 
 export interface PostItState {
@@ -100,6 +109,12 @@ export interface ReponseMeteo {
   humeur: string;
 }
 
+export interface ReponseRoti {
+  participantId: string;
+  nomAffiche: string;
+  niveau: string;
+}
+
 export interface OptionPoll {
   id: string;
   texte: string;
@@ -125,6 +140,9 @@ export interface EtapeState {
   question: string | null;
   options: OptionPoll[] | null;
   maReponseOptionId: string | null;
+  reponsesRoti: ReponseRoti[] | null;
+  monNiveauRoti: string | null;
+  visuelsRoti: NiveauVisuel[] | null;
 }
 
 export interface BoardState {

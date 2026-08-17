@@ -60,7 +60,7 @@ public class EtapeService(ScrumMasterDbContext db)
                 await ResolveThemeAsync(demande.ThemeId, demande.ThemePersonnalise),
                 statut
             ),
-            TypeEtape.MiniJeu => await CreerEtapeMiniJeuAsync(ordre, demande.MiniJeuCatalogueId, statut),
+            TypeEtape.MiniJeu => await CreerEtapeMiniJeuAsync(ordre, demande.MiniJeuCatalogueId, demande.RotiPersonnalisations, statut),
             TypeEtape.PollPersonnalise => CreerEtapePollPersonnalise(ordre, demande.Question, demande.Options, statut),
             _ => throw new DomainValidationException($"Type d'étape \"{demande.Type}\" non reconnu."),
         };
@@ -77,14 +77,30 @@ public class EtapeService(ScrumMasterDbContext db)
             Theme = theme,
         };
 
-    private async Task<Etape> CreerEtapeMiniJeuAsync(int ordre, Guid? miniJeuCatalogueId, StatutEtape statut)
+    private async Task<Etape> CreerEtapeMiniJeuAsync(
+        int ordre,
+        Guid? miniJeuCatalogueId,
+        IReadOnlyList<NiveauVisuelDto>? rotiPersonnalisations,
+        StatutEtape statut
+    )
     {
-        if (miniJeuCatalogueId is null || !await db.MiniJeuxCatalogue.AnyAsync(m => m.Id == miniJeuCatalogueId))
+        if (miniJeuCatalogueId is null)
         {
             throw new DomainValidationException("Un mini-jeu du catalogue doit être choisi pour une étape de type Mini-jeu.");
         }
 
-        return new Etape
+        var miniJeu = await db.MiniJeuxCatalogue.FirstOrDefaultAsync(m => m.Id == miniJeuCatalogueId);
+        if (miniJeu is null)
+        {
+            throw new DomainValidationException("Un mini-jeu du catalogue doit être choisi pour une étape de type Mini-jeu.");
+        }
+
+        if (rotiPersonnalisations is { Count: > 0 } && miniJeu.TypeInterne != "roti")
+        {
+            throw new DomainValidationException("Seul le mini-jeu ROTI accepte une personnalisation de visuel par niveau.");
+        }
+
+        var etape = new Etape
         {
             Id = Guid.NewGuid(),
             Type = TypeEtape.MiniJeu,
@@ -92,6 +108,35 @@ public class EtapeService(ScrumMasterDbContext db)
             Statut = statut,
             MiniJeuCatalogueId = miniJeuCatalogueId,
         };
+
+        if (rotiPersonnalisations is { Count: > 0 })
+        {
+            etape.VisuelsRoti = rotiPersonnalisations
+                .Select(v =>
+                {
+                    if (!Enum.TryParse<NiveauRoti>(v.Niveau, out var niveau))
+                    {
+                        throw new DomainValidationException($"Niveau ROTI \"{v.Niveau}\" non reconnu.");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(v.UrlIllustration))
+                    {
+                        throw new DomainValidationException("L'URL d'illustration d'un niveau ROTI personnalisé ne peut pas être vide.");
+                    }
+
+                    ValidateUrlIllustration(v.UrlIllustration);
+
+                    return new EtapeRotiVisuel
+                    {
+                        EtapeId = etape.Id,
+                        Niveau = niveau,
+                        UrlIllustration = v.UrlIllustration,
+                    };
+                })
+                .ToList();
+        }
+
+        return etape;
     }
 
     private static Etape CreerEtapePollPersonnalise(int ordre, string? question, IReadOnlyList<string>? options, StatutEtape statut)
@@ -188,7 +233,7 @@ public class EtapeService(ScrumMasterDbContext db)
                 source.Nom,
                 source.Icone,
                 source.Contexte,
-                source.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneSummaireDto(c.Intitule, c.Couleur, c.UrlIllustration))
+                source.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneSummaireDto(c.Intitule, c.Couleur, c.UrlIllustration, c.SousTitre))
             );
         }
 
@@ -214,6 +259,7 @@ public class EtapeService(ScrumMasterDbContext db)
             {
                 ValidateCouleur(colonne.Couleur);
                 ValidateUrlIllustration(colonne.UrlIllustration);
+                ValidateSousTitre(colonne.SousTitre);
             }
 
             return CopyTheme(themePersonnalise.Nom, themePersonnalise.Icone, themePersonnalise.Contexte, colonnes);
@@ -229,7 +275,7 @@ public class EtapeService(ScrumMasterDbContext db)
             defaut.Nom,
             defaut.Icone,
             defaut.Contexte,
-            defaut.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneSummaireDto(c.Intitule, c.Couleur, c.UrlIllustration))
+            defaut.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneSummaireDto(c.Intitule, c.Couleur, c.UrlIllustration, c.SousTitre))
         );
     }
 
@@ -264,6 +310,15 @@ public class EtapeService(ScrumMasterDbContext db)
         }
     }
 
+    /// <summary>Longueur du sous-titre/question directrice de colonne.</summary>
+    private static void ValidateSousTitre(string? sousTitre)
+    {
+        if (sousTitre?.Length > 150)
+        {
+            throw new DomainValidationException("Le sous-titre d'une colonne ne doit pas dépasser 150 caractères.");
+        }
+    }
+
     private static Theme CopyTheme(string nom, string? icone, string? contexte, IEnumerable<ColonneSummaireDto> colonnes)
     {
         var theme = new Theme
@@ -286,6 +341,7 @@ public class EtapeService(ScrumMasterDbContext db)
                     Ordre = index,
                     Couleur = colonne.Couleur,
                     UrlIllustration = colonne.UrlIllustration,
+                    SousTitre = colonne.SousTitre,
                 }
             )
             .ToList();
