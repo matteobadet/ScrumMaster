@@ -17,6 +17,16 @@ export type ThemeSelection =
   | { kind: 'predefined'; themeId: string }
   | { kind: 'custom'; nom: string; icone: string; contexte: string; colonnes: string[] };
 
+/** Une étape demandée à la composition d'une séquence (US1, specs/006-systeme-extensions-etapes). */
+export interface EtapeRequest {
+  type: 'ColonnesEtPostIts' | 'MiniJeu' | 'PollPersonnalise';
+  themeId?: string | null;
+  themePersonnalise?: ThemePersonnalise | null;
+  miniJeuCatalogueId?: string | null;
+  question?: string | null;
+  options?: string[] | null;
+}
+
 export interface CreateBoardRequest {
   areaPath: string;
   iteration: string;
@@ -24,6 +34,7 @@ export interface CreateBoardRequest {
   themePersonnalise?: ThemePersonnalise | null;
   maxVotesParParticipant?: number | null;
   nomAffiche: string;
+  etapes?: EtapeRequest[] | null;
 }
 
 export interface CreateBoardResponse {
@@ -68,16 +79,52 @@ export interface ParticipantState {
   role: 'Facilitateur' | 'Participant';
 }
 
+export interface MiniJeuRef {
+  id: string;
+  nom: string;
+  typeInterne: string;
+}
+
+export interface ReponseMeteo {
+  participantId: string;
+  nomAffiche: string;
+  humeur: string;
+}
+
+export interface OptionPoll {
+  id: string;
+  texte: string;
+  decompte: number;
+}
+
+/**
+ * Une étape de la séquence du board, quel que soit son type — les champs non pertinents pour ce
+ * type sont null (union étiquetée, specs/006-systeme-extensions-etapes, research.md#1).
+ */
+export interface EtapeState {
+  id: string;
+  type: 'ColonnesEtPostIts' | 'MiniJeu' | 'PollPersonnalise';
+  ordre: number;
+  statut: 'AVenir' | 'Active' | 'Terminee';
+  theme: ThemeRef | null;
+  colonnes: ColonneState[] | null;
+  postIts: PostItState[] | null;
+  mesVotesRestants: number | null;
+  miniJeu: MiniJeuRef | null;
+  reponsesMeteo: ReponseMeteo[] | null;
+  monHumeur: string | null;
+  question: string | null;
+  options: OptionPoll[] | null;
+  maReponseOptionId: string | null;
+}
+
 export interface BoardState {
   boardId: string;
   areaPath: string;
   iteration: string;
   statut: 'Actif' | 'Cloture';
   maxVotesParParticipant: number;
-  mesVotesRestants: number | null;
-  theme: ThemeRef;
-  colonnes: ColonneState[];
-  postIts: PostItState[];
+  etapes: EtapeState[];
   participants: ParticipantState[];
 }
 

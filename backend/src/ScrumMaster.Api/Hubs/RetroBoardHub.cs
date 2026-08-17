@@ -15,7 +15,10 @@ public class RetroBoardHub(
     PostItService postItService,
     VoteService voteService,
     BoardService boardService,
-    AzureDevOpsBoardService azureDevOpsBoardService
+    AzureDevOpsBoardService azureDevOpsBoardService,
+    EtapeService etapeService,
+    MiniJeuService miniJeuService,
+    PollPersonnaliseService pollPersonnaliseService
 ) : Hub
 {
     public async Task JoinBoard(Guid boardId, Guid participantId)
@@ -115,13 +118,55 @@ public class RetroBoardHub(
             );
     }
 
-    public async Task CloseBoard(Guid boardId)
+    public async Task AvancerEtape(Guid boardId)
     {
         var callerId = await ResolveCallerParticipantIdAsync(boardId);
 
-        await RunOrThrowHubExceptionAsync(() => boardService.CloseBoardAsync(boardId, callerId));
+        var result = await RunOrThrowHubExceptionAsync(() => etapeService.AvancerEtapeAsync(boardId, callerId));
 
-        await Clients.Group(boardId.ToString()).SendAsync("BoardClosed", new { boardId });
+        if (result.BoardFerme)
+        {
+            await Clients.Group(boardId.ToString()).SendAsync("BoardClosed", new { boardId });
+        }
+        else
+        {
+            await Clients
+                .Group(boardId.ToString())
+                .SendAsync("EtapeChangee", new { nouvelleEtapeId = result.NouvelleEtapeId });
+        }
+    }
+
+    public async Task RepondreMiniJeu(Guid boardId, Guid etapeId, string reponse)
+    {
+        var callerId = await ResolveCallerParticipantIdAsync(boardId);
+
+        var result = await RunOrThrowHubExceptionAsync(() => miniJeuService.RepondreAsync(boardId, etapeId, callerId, reponse));
+
+        await Clients
+            .Group(boardId.ToString())
+            .SendAsync(
+                "ReponseMiniJeuChangee",
+                new
+                {
+                    etapeId,
+                    participantId = result.ParticipantId,
+                    nomAffiche = result.NomAffiche,
+                    reponse = result.Reponse,
+                }
+            );
+    }
+
+    public async Task RepondrePollPersonnalise(Guid boardId, Guid etapeId, Guid optionId)
+    {
+        var callerId = await ResolveCallerParticipantIdAsync(boardId);
+
+        var result = await RunOrThrowHubExceptionAsync(
+            () => pollPersonnaliseService.RepondreAsync(boardId, etapeId, callerId, optionId)
+        );
+
+        await Clients
+            .Group(boardId.ToString())
+            .SendAsync("ReponsePollPersonnaliseChangee", new { etapeId, decompteParOption = result.DecompteParOption });
     }
 
     public async Task AddPostIt(Guid boardId, Guid colonneId, string texte)

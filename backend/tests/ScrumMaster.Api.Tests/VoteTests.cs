@@ -37,8 +37,8 @@ public class VoteTests : IClassFixture<TestWebApplicationFactory>
         Assert.Equal(1, afterVote.NombreVotes);
 
         var stateAfterVote = await GetBoardStateAsync(boardId, participantId);
-        Assert.True(stateAfterVote.PostIts.Single(p => p.Id == postItId).VoteDuParticipant);
-        Assert.Equal(1, stateAfterVote.MesVotesRestants);
+        Assert.True(stateAfterVote.Etapes[0].PostIts!.Single(p => p.Id == postItId).VoteDuParticipant);
+        Assert.Equal(1, stateAfterVote.Etapes[0].MesVotesRestants);
 
         voteChanged = new TaskCompletionSource<VoteChangedEnvelope>(TaskCreationOptions.RunContinuationsAsynchronously);
         await connection.InvokeAsync("RemoveVote", boardId, postItId);
@@ -46,8 +46,8 @@ public class VoteTests : IClassFixture<TestWebApplicationFactory>
         Assert.Equal(0, afterRemove.NombreVotes);
 
         var stateAfterRemove = await GetBoardStateAsync(boardId, participantId);
-        Assert.False(stateAfterRemove.PostIts.Single(p => p.Id == postItId).VoteDuParticipant);
-        Assert.Equal(2, stateAfterRemove.MesVotesRestants);
+        Assert.False(stateAfterRemove.Etapes[0].PostIts!.Single(p => p.Id == postItId).VoteDuParticipant);
+        Assert.Equal(2, stateAfterRemove.Etapes[0].MesVotesRestants);
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class VoteTests : IClassFixture<TestWebApplicationFactory>
 
         var state = await GetBoardStateAsync(created!.BoardId, created.ParticipantId);
 
-        return (created.BoardId, state.Colonnes[0].Id, created.ParticipantId);
+        return (created.BoardId, state.Etapes[0].Colonnes![0].Id, created.ParticipantId);
     }
 
     private HubConnection CreateConnection() =>

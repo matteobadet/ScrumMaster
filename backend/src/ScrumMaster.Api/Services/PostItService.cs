@@ -6,27 +6,26 @@ namespace ScrumMaster.Api.Services;
 
 public record PostItResult(Guid Id, Guid ColonneId, string Texte, string Auteur, Guid AuteurParticipantId);
 
+/// <summary>
+/// Portée révisée par étape (specs/006-systeme-extensions-etapes) : un post-it appartient à
+/// l'étape "Colonnes et post-its" qui le porte, pas directement au board.
+/// </summary>
 public class PostItService(ScrumMasterDbContext db)
 {
     public async Task<PostItResult> AddAsync(Guid boardId, Guid colonneId, string texte, Guid auteurParticipantId)
     {
         ValidateTexte(texte);
 
-        var board = await GetBoardWithThemeAsync(boardId);
-        BoardClosureGuard.EnsureActif(board);
-        ValidateColonneAppartientAuBoard(board, colonneId);
+        var etape = await GetEtapeActiveColonnesEtPostItsAsync(boardId);
+        ValidateColonneAppartientALEtape(etape, colonneId);
 
-        var auteur = await db.Participants.FirstOrDefaultAsync(p => p.Id == auteurParticipantId && p.BoardId == boardId);
-        if (auteur is null)
-        {
-            throw new DomainNotFoundException($"Participant {auteurParticipantId} introuvable sur ce board.");
-        }
+        var auteur = await GetParticipantAsync(boardId, auteurParticipantId);
 
         var now = DateTimeOffset.UtcNow;
         var postIt = new PostIt
         {
             Id = Guid.NewGuid(),
-            BoardId = boardId,
+            EtapeId = etape.Id,
             ColonneId = colonneId,
             Texte = texte.Trim(),
             AuteurParticipantId = auteurParticipantId,
@@ -43,9 +42,7 @@ public class PostItService(ScrumMasterDbContext db)
     {
         ValidateTexte(texte);
 
-        var board = await GetBoardWithThemeAsync(boardId);
-        BoardClosureGuard.EnsureActif(board);
-        var postIt = await GetOwnedPostItAsync(boardId, postItId, callerParticipantId);
+        var postIt = await GetOwnedPostItActifAsync(boardId, postItId, callerParticipantId);
         postIt.Texte = texte.Trim();
         postIt.DateModification = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync();
@@ -56,15 +53,18 @@ public class PostItService(ScrumMasterDbContext db)
 
     public async Task<PostItResult> MoveAsync(Guid boardId, Guid postItId, Guid colonneId)
     {
-        var board = await GetBoardWithThemeAsync(boardId);
-        BoardClosureGuard.EnsureActif(board);
-        ValidateColonneAppartientAuBoard(board, colonneId);
-
-        var postIt = await db.PostIts.FirstOrDefaultAsync(p => p.Id == postItId && p.BoardId == boardId);
-        if (postIt is null)
+        var postIt = await db
+            .PostIts.Include(p => p.Etape!)
+            .ThenInclude(e => e.Theme!)
+            .ThenInclude(t => t.Colonnes)
+            .FirstOrDefaultAsync(p => p.Id == postItId);
+        if (postIt is null || postIt.Etape!.BoardId != boardId)
         {
             throw new DomainNotFoundException($"Post-it {postItId} introuvable sur ce board.");
         }
+
+        EnsureEtapeActive(postIt.Etape);
+        ValidateColonneAppartientALEtape(postIt.Etape, colonneId);
 
         postIt.ColonneId = colonneId;
         postIt.DateModification = DateTimeOffset.UtcNow;
@@ -76,20 +76,20 @@ public class PostItService(ScrumMasterDbContext db)
 
     public async Task DeleteAsync(Guid boardId, Guid postItId, Guid callerParticipantId)
     {
-        var board = await GetBoardWithThemeAsync(boardId);
-        BoardClosureGuard.EnsureActif(board);
-        var postIt = await GetOwnedPostItAsync(boardId, postItId, callerParticipantId);
+        var postIt = await GetOwnedPostItActifAsync(boardId, postItId, callerParticipantId);
         db.PostIts.Remove(postIt);
         await db.SaveChangesAsync();
     }
 
-    private async Task<PostIt> GetOwnedPostItAsync(Guid boardId, Guid postItId, Guid callerParticipantId)
+    private async Task<PostIt> GetOwnedPostItActifAsync(Guid boardId, Guid postItId, Guid callerParticipantId)
     {
-        var postIt = await db.PostIts.FirstOrDefaultAsync(p => p.Id == postItId && p.BoardId == boardId);
-        if (postIt is null)
+        var postIt = await db.PostIts.Include(p => p.Etape!).FirstOrDefaultAsync(p => p.Id == postItId);
+        if (postIt is null || postIt.Etape!.BoardId != boardId)
         {
             throw new DomainNotFoundException($"Post-it {postItId} introuvable sur ce board.");
         }
+
+        EnsureEtapeActive(postIt.Etape);
 
         if (postIt.AuteurParticipantId != callerParticipantId)
         {
@@ -99,22 +99,53 @@ public class PostItService(ScrumMasterDbContext db)
         return postIt;
     }
 
-    private async Task<Board> GetBoardWithThemeAsync(Guid boardId)
+    private static void EnsureEtapeActive(Etape etape)
     {
-        var board = await db.Boards.Include(b => b.Theme!).ThenInclude(t => t.Colonnes).FirstOrDefaultAsync(b => b.Id == boardId);
+        if (etape.Statut != StatutEtape.Active)
+        {
+            throw new DomainValidationException("Cette étape n'est plus active.");
+        }
+    }
+
+    private async Task<Etape> GetEtapeActiveColonnesEtPostItsAsync(Guid boardId)
+    {
+        var board = await db
+            .Boards.Include(b => b.Etapes)
+            .ThenInclude(e => e.Theme!)
+            .ThenInclude(t => t.Colonnes)
+            .FirstOrDefaultAsync(b => b.Id == boardId);
         if (board is null)
         {
             throw new DomainNotFoundException($"Board {boardId} introuvable.");
         }
 
-        return board;
+        BoardClosureGuard.EnsureActif(board);
+
+        var etape = board.Etapes.FirstOrDefault(e => e.Statut == StatutEtape.Active);
+        if (etape is null || etape.Type != TypeEtape.ColonnesEtPostIts)
+        {
+            throw new DomainValidationException("L'étape active n'accepte pas les post-its.");
+        }
+
+        return etape;
     }
 
-    private static void ValidateColonneAppartientAuBoard(Board board, Guid colonneId)
+    private async Task<Participant> GetParticipantAsync(Guid boardId, Guid participantId)
     {
-        if (board.Theme!.Colonnes.All(c => c.Id != colonneId))
+        var participant = await db.Participants.FirstOrDefaultAsync(p => p.Id == participantId && p.BoardId == boardId);
+        if (participant is null)
         {
-            throw new DomainValidationException($"La colonne {colonneId} n'appartient pas au thème de ce board.");
+            throw new DomainNotFoundException($"Participant {participantId} introuvable sur ce board.");
+        }
+
+        return participant;
+    }
+
+    private static void ValidateColonneAppartientALEtape(Etape etape, Guid colonneId)
+    {
+        if (etape.Theme!.Colonnes.All(c => c.Id != colonneId))
+        {
+            throw new DomainValidationException($"La colonne {colonneId} n'appartient pas au thème de cette étape.");
         }
     }
 

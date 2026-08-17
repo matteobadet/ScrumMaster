@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { HubConnection } from '@microsoft/signalr';
 import { createRetroBoardConnection } from '../services/realtimeClient';
 import { boardsApi } from '../services/boardsApi';
-import type { BoardState, CurrentParticipant, ParticipantState, PostItState } from '../types';
+import type { BoardState, CurrentParticipant, EtapeState, ParticipantState, PostItState } from '../types';
 
 interface PostItAddedEvent {
   postIt: PostItState;
@@ -42,6 +42,37 @@ interface MonVoteChangedEvent {
   postItId: string;
   voteDuParticipant: boolean;
   votesRestants: number;
+}
+
+interface ReponseMiniJeuChangeeEvent {
+  etapeId: string;
+  participantId: string;
+  nomAffiche: string;
+  reponse: string;
+}
+
+interface ReponsePollPersonnaliseChangeeEvent {
+  etapeId: string;
+  decompteParOption: { optionId: string; decompte: number }[];
+}
+
+/**
+ * Applique une mise à jour à l'étape "Colonnes et post-its" active du board (au plus une à la
+ * fois, specs/006-systeme-extensions-etapes) — les événements post-its/votes ne portent pas
+ * d'etapeId, ils s'appliquent implicitement à cette étape (contracts/realtime-hub-delta.md).
+ */
+function updateActiveColonnesEtape(board: BoardState, update: (etape: EtapeState) => EtapeState): BoardState {
+  return {
+    ...board,
+    etapes: board.etapes.map((etape) =>
+      etape.statut === 'Active' && etape.type === 'ColonnesEtPostIts' ? update(etape) : etape,
+    ),
+  };
+}
+
+/** Applique une mise à jour à une étape précise du board, par id. */
+function updateEtapeById(board: BoardState, etapeId: string, update: (etape: EtapeState) => EtapeState): BoardState {
+  return { ...board, etapes: board.etapes.map((etape) => (etape.id === etapeId ? update(etape) : etape)) };
 }
 
 /**
@@ -92,13 +123,20 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
       connection = createRetroBoardConnection();
 
       connection.on('PostItAdded', ({ postIt }: PostItAddedEvent) => {
-        setBoard((current) => (current ? { ...current, postIts: [...current.postIts, postIt] } : current));
+        setBoard((current) =>
+          current
+            ? updateActiveColonnesEtape(current, (etape) => ({ ...etape, postIts: [...(etape.postIts ?? []), postIt] }))
+            : current,
+        );
       });
 
       connection.on('PostItUpdated', ({ postItId, texte }: PostItUpdatedEvent) => {
         setBoard((current) =>
           current
-            ? { ...current, postIts: current.postIts.map((p) => (p.id === postItId ? { ...p, texte } : p)) }
+            ? updateActiveColonnesEtape(current, (etape) => ({
+                ...etape,
+                postIts: (etape.postIts ?? []).map((p) => (p.id === postItId ? { ...p, texte } : p)),
+              }))
             : current,
         );
       });
@@ -106,26 +144,34 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
       connection.on('PostItMoved', ({ postItId, colonneId }: PostItMovedEvent) => {
         setBoard((current) =>
           current
-            ? { ...current, postIts: current.postIts.map((p) => (p.id === postItId ? { ...p, colonneId } : p)) }
+            ? updateActiveColonnesEtape(current, (etape) => ({
+                ...etape,
+                postIts: (etape.postIts ?? []).map((p) => (p.id === postItId ? { ...p, colonneId } : p)),
+              }))
             : current,
         );
       });
 
       connection.on('PostItDeleted', ({ postItId }: PostItDeletedEvent) => {
         setBoard((current) =>
-          current ? { ...current, postIts: current.postIts.filter((p) => p.id !== postItId) } : current,
+          current
+            ? updateActiveColonnesEtape(current, (etape) => ({
+                ...etape,
+                postIts: (etape.postIts ?? []).filter((p) => p.id !== postItId),
+              }))
+            : current,
         );
       });
 
       connection.on('PostItExported', ({ postItId, workItemId }: PostItExportedEvent) => {
         setBoard((current) =>
           current
-            ? {
-                ...current,
-                postIts: current.postIts.map((p) =>
+            ? updateActiveColonnesEtape(current, (etape) => ({
+                ...etape,
+                postIts: (etape.postIts ?? []).map((p) =>
                   p.id === postItId ? { ...p, workItemExporteId: workItemId } : p,
                 ),
-              }
+              }))
             : current,
         );
       });
@@ -133,7 +179,10 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
       connection.on('VoteChanged', ({ postItId, nombreVotes }: VoteChangedEvent) => {
         setBoard((current) =>
           current
-            ? { ...current, postIts: current.postIts.map((p) => (p.id === postItId ? { ...p, nombreVotes } : p)) }
+            ? updateActiveColonnesEtape(current, (etape) => ({
+                ...etape,
+                postIts: (etape.postIts ?? []).map((p) => (p.id === postItId ? { ...p, nombreVotes } : p)),
+              }))
             : current,
         );
       });
@@ -141,11 +190,11 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
       connection.on('MonVoteChanged', ({ postItId, voteDuParticipant, votesRestants }: MonVoteChangedEvent) => {
         setBoard((current) =>
           current
-            ? {
-                ...current,
+            ? updateActiveColonnesEtape(current, (etape) => ({
+                ...etape,
                 mesVotesRestants: votesRestants,
-                postIts: current.postIts.map((p) => (p.id === postItId ? { ...p, voteDuParticipant } : p)),
-              }
+                postIts: (etape.postIts ?? []).map((p) => (p.id === postItId ? { ...p, voteDuParticipant } : p)),
+              }))
             : current,
         );
       });
@@ -161,7 +210,55 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
       });
 
       connection.on('BoardClosed', () => {
-        setBoard((current) => (current ? { ...current, statut: 'Cloture' } : current));
+        // La dernière étape passe aussi à Terminee côté serveur (EtapeService.AvancerEtapeAsync) :
+        // une resynchronisation complète évite de dupliquer cette logique côté client.
+        resync().catch(() => {
+          if (!cancelled) {
+            setError('Le board a été clôturé mais la resynchronisation a échoué.');
+          }
+        });
+      });
+
+      connection.on('EtapeChangee', () => {
+        // La nouvelle étape active porte son propre état (thème/colonnes ou mini-jeu ou poll) :
+        // une resynchronisation complète est plus sûre qu'un patch (US1, T017-T018).
+        resync().catch(() => {
+          if (!cancelled) {
+            setError("L'étape a changé mais la resynchronisation a échoué.");
+          }
+        });
+      });
+
+      connection.on(
+        'ReponseMiniJeuChangee',
+        ({ etapeId, participantId: repondantId, nomAffiche, reponse }: ReponseMiniJeuChangeeEvent) => {
+          setBoard((current) =>
+            current
+              ? updateEtapeById(current, etapeId, (etape) => ({
+                  ...etape,
+                  reponsesMeteo: [
+                    ...(etape.reponsesMeteo ?? []).filter((r) => r.participantId !== repondantId),
+                    { participantId: repondantId, nomAffiche, humeur: reponse },
+                  ],
+                  monHumeur: repondantId === participantId ? reponse : etape.monHumeur,
+                }))
+              : current,
+          );
+        },
+      );
+
+      connection.on('ReponsePollPersonnaliseChangee', ({ etapeId, decompteParOption }: ReponsePollPersonnaliseChangeeEvent) => {
+        setBoard((current) =>
+          current
+            ? updateEtapeById(current, etapeId, (etape) => ({
+                ...etape,
+                options: (etape.options ?? []).map((option) => {
+                  const decompte = decompteParOption.find((d) => d.optionId === option.id);
+                  return decompte ? { ...option, decompte: decompte.decompte } : option;
+                }),
+              }))
+            : current,
+        );
       });
 
       connection.on('ParticipantJoined', ({ participantId: id, nomAffiche, role }: ParticipantJoinedEvent) => {
@@ -224,5 +321,15 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
     connectionRef.current?.invoke(method, ...args).catch((err: Error) => setError(err.message));
   }
 
-  return { board, error, invoke };
+  /**
+   * L'événement `ReponsePollPersonnaliseChangee` ne porte que le décompte agrégé (visible par
+   * tous), pas l'identité du répondant — la réponse du participant courant est donc appliquée
+   * localement en optimiste, avant confirmation serveur (contracts/realtime-hub-delta.md).
+   */
+  function repondrePollPersonnalise(boardId: string, etapeId: string, optionId: string) {
+    setBoard((current) => (current ? updateEtapeById(current, etapeId, (etape) => ({ ...etape, maReponseOptionId: optionId })) : current));
+    invoke('RepondrePollPersonnalise', boardId, etapeId, optionId);
+  }
+
+  return { board, error, invoke, repondrePollPersonnalise };
 }

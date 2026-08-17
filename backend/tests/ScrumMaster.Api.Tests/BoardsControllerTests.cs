@@ -40,8 +40,8 @@ public class BoardsControllerTests : IClassFixture<TestWebApplicationFactory>
         Assert.NotNull(state);
         Assert.Equal("Krypton", state!.AreaPath);
         Assert.Equal("Sprint-138", state.Iteration);
-        Assert.Equal(3, state.Colonnes.Count);
-        Assert.Contains(state.Colonnes, c => c.Intitule == "Start");
+        Assert.Equal(3, state.Etapes[0].Colonnes!.Count);
+        Assert.Contains(state.Etapes[0].Colonnes!, c => c.Intitule == "Start");
         Assert.Single(state.Participants);
         Assert.Equal("Facilitateur", state.Participants[0].Role);
     }

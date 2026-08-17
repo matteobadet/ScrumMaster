@@ -91,7 +91,7 @@ public class RetroBoardHubRealtimeTests : IClassFixture<TestWebApplicationFactor
         var stateResponse = await _client.GetAsync($"/api/boards/{created!.BoardId}");
         var state = await stateResponse.Content.ReadFromJsonAsync<BoardStateDto>();
 
-        return (created.BoardId, state!.Colonnes.Select(c => c.Id).ToList(), created.ParticipantId);
+        return (created.BoardId, state!.Etapes[0].Colonnes!.Select(c => c.Id).ToList(), created.ParticipantId);
     }
 
     private HubConnection CreateConnection() =>

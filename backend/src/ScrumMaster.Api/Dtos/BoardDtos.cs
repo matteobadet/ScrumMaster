@@ -6,7 +6,8 @@ public record CreateBoardRequest(
     Guid? ThemeId,
     ThemePersonnaliseDto? ThemePersonnalise,
     int? MaxVotesParParticipant,
-    string NomAffiche
+    string NomAffiche,
+    IReadOnlyList<EtapeRequestDto>? Etapes = null
 );
 
 public record CreateBoardResponse(Guid BoardId, Guid ParticipantId, string Role, string LienAcces);
@@ -42,9 +43,6 @@ public record BoardStateDto(
     string Iteration,
     string Statut,
     int MaxVotesParParticipant,
-    int? MesVotesRestants,
-    ThemeRefDto Theme,
-    IReadOnlyList<ColonneDto> Colonnes,
-    IReadOnlyList<PostItDto> PostIts,
+    IReadOnlyList<EtapeDto> Etapes,
     IReadOnlyList<ParticipantDto> Participants
 );

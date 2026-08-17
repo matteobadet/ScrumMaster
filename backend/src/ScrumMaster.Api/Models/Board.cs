@@ -16,10 +16,6 @@ public class Board
 
     public string Iteration { get; set; } = string.Empty;
 
-    public Guid ThemeId { get; set; }
-
-    public Theme? Theme { get; set; }
-
     public BoardStatut Statut { get; set; } = BoardStatut.Actif;
 
     public DateTimeOffset DateCreation { get; set; }
@@ -28,5 +24,6 @@ public class Board
 
     public List<Participant> Participants { get; set; } = new();
 
-    public List<PostIt> PostIts { get; set; } = new();
+    /// <summary>Séquence d'étapes du board, ordonnée par Ordre — au moins une (specs/006-systeme-extensions-etapes).</summary>
+    public List<Etape> Etapes { get; set; } = new();
 }

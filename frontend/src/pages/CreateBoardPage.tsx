@@ -4,14 +4,18 @@ import { boardsApi } from '../services/boardsApi';
 import { participantStorage } from '../services/participantStorage';
 import { ApiError } from '../services/apiClient';
 import { ThemeEditor } from '../components/ThemeEditor';
-import type { EquipeAzureDevOps, IterationAzureDevOps, ThemeSelection, ThemeSummary } from '../types';
+import { EtapeSequenceEditor, buildEtapeRequests, creerEtapeBuilder, type EtapeBuilder } from '../components/EtapeSequenceEditor';
+import type { EquipeAzureDevOps, EtapeRequest, IterationAzureDevOps, MiniJeuRef, ThemeSelection, ThemeSummary } from '../types';
 
 export function CreateBoardPage() {
   const navigate = useNavigate();
   const [themes, setThemes] = useState<ThemeSummary[]>([]);
+  const [miniJeux, setMiniJeux] = useState<MiniJeuRef[]>([]);
   const [areaPath, setAreaPath] = useState('');
   const [iteration, setIteration] = useState('');
   const [themeSelection, setThemeSelection] = useState<ThemeSelection>({ kind: 'predefined', themeId: '' });
+  const [sequenceMode, setSequenceMode] = useState(false);
+  const [etapeBuilders, setEtapeBuilders] = useState<EtapeBuilder[]>([]);
   const [nomAffiche, setNomAffiche] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -35,6 +39,8 @@ export function CreateBoardPage() {
         }
       })
       .catch(() => setThemes([]));
+
+    boardsApi.getMiniJeux().then(setMiniJeux).catch(() => setMiniJeux([]));
 
     boardsApi
       .listerEquipesAvecAzureDevOps()
@@ -84,12 +90,21 @@ export function CreateBoardPage() {
     setIterationsIndisponibles(false);
   }
 
+  function activerSequenceMode() {
+    setSequenceMode(true);
+    setEtapeBuilders((current) => (current.length > 0 ? current : [creerEtapeBuilder('ColonnesEtPostIts', themes, miniJeux)]));
+  }
+
+  function activerEtapeUniqueMode() {
+    setSequenceMode(false);
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
 
     let colonnesNonVides: string[] = [];
-    if (themeSelection.kind === 'custom') {
+    if (!sequenceMode && themeSelection.kind === 'custom') {
       colonnesNonVides = themeSelection.colonnes.map((c) => c.trim()).filter(Boolean);
       if (colonnesNonVides.length === 0) {
         setError('Un thème personnalisé doit comporter au moins une colonne.');
@@ -97,14 +112,24 @@ export function CreateBoardPage() {
       }
     }
 
+    let etapes: EtapeRequest[] | undefined;
+    if (sequenceMode) {
+      const built = buildEtapeRequests(etapeBuilders);
+      if (built.error) {
+        setError(built.error);
+        return;
+      }
+      etapes = built.requests;
+    }
+
     setSubmitting(true);
     try {
       const response = await boardsApi.createBoard({
         areaPath,
         iteration,
-        themeId: themeSelection.kind === 'predefined' ? themeSelection.themeId || null : null,
+        themeId: !sequenceMode && themeSelection.kind === 'predefined' ? themeSelection.themeId || null : null,
         themePersonnalise:
-          themeSelection.kind === 'custom'
+          !sequenceMode && themeSelection.kind === 'custom'
             ? {
                 nom: themeSelection.nom || 'Thème personnalisé',
                 icone: themeSelection.icone.trim() || null,
@@ -114,6 +139,7 @@ export function CreateBoardPage() {
             : null,
         maxVotesParParticipant: null,
         nomAffiche,
+        etapes,
       });
 
       participantStorage.save(response.boardId, {
@@ -194,7 +220,23 @@ export function CreateBoardPage() {
             )}
           </label>
         )}
-        <ThemeEditor themes={themes} value={themeSelection} onChange={setThemeSelection} />
+        <fieldset>
+          <legend>Composition du board</legend>
+          <label>
+            <input type="radio" checked={!sequenceMode} onChange={activerEtapeUniqueMode} />
+            Étape unique (comportement actuel)
+          </label>
+          <label>
+            <input type="radio" checked={sequenceMode} onChange={activerSequenceMode} />
+            Séquence de plusieurs étapes
+          </label>
+        </fieldset>
+
+        {sequenceMode ? (
+          <EtapeSequenceEditor etapes={etapeBuilders} themes={themes} miniJeux={miniJeux} onChange={setEtapeBuilders} />
+        ) : (
+          <ThemeEditor themes={themes} value={themeSelection} onChange={setThemeSelection} />
+        )}
         <label>
           Votre nom
           <input value={nomAffiche} onChange={(e) => setNomAffiche(e.target.value)} required />

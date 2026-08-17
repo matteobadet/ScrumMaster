@@ -77,9 +77,9 @@ public class ThemeChangeTests : IClassFixture<TestWebApplicationFactory>
         await connection.InvokeAsync("ChangeTheme", boardId, null, themePersonnalise);
 
         var state = await GetBoardStateAsync(boardId);
-        Assert.Single(state.PostIts);
-        Assert.Equal("Ne doit pas disparaître", state.PostIts[0].Texte);
-        Assert.Equal(state.Colonnes[0].Id, state.PostIts[0].ColonneId);
+        Assert.Single(state.Etapes[0].PostIts!);
+        Assert.Equal("Ne doit pas disparaître", state.Etapes[0].PostIts![0].Texte);
+        Assert.Equal(state.Etapes[0].Colonnes![0].Id, state.Etapes[0].PostIts![0].ColonneId);
     }
 
     private record PostItAddedEnvelope(PostItPayload PostIt);
@@ -96,7 +96,7 @@ public class ThemeChangeTests : IClassFixture<TestWebApplicationFactory>
     {
         var (boardId, facilitateurId) = await CreateBoardAsync();
         var state = await GetBoardStateAsync(boardId);
-        return (boardId, state.Colonnes.Select(c => c.Id).ToList(), facilitateurId);
+        return (boardId, state.Etapes[0].Colonnes!.Select(c => c.Id).ToList(), facilitateurId);
     }
 
     [Fact]

@@ -109,7 +109,7 @@ public class ExportPostItTests : IDisposable
         var stateResponse = await _client.GetAsync($"/api/boards/{created!.BoardId}");
         var state = await stateResponse.Content.ReadFromJsonAsync<BoardStateDto>();
 
-        return (created.BoardId, created.ParticipantId, state!.Colonnes[0].Id);
+        return (created.BoardId, created.ParticipantId, state!.Etapes[0].Colonnes![0].Id);
     }
 
     private HubConnection CreerConnexion() =>

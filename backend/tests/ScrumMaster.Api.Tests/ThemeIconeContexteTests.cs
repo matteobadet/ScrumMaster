@@ -32,8 +32,8 @@ public class ThemeIconeContexteTests : IClassFixture<TestWebApplicationFactory>
 
         var state = await (await _client.GetAsync($"/api/boards/{created!.BoardId}")).Content.ReadFromJsonAsync<BoardStateDto>();
 
-        Assert.Equal("🐷", state!.Theme.Icone);
-        Assert.Null(state.Theme.Contexte);
+        Assert.Equal("🐷", state!.Etapes[0].Theme!.Icone);
+        Assert.Null(state.Etapes[0].Theme!.Contexte);
     }
 
     [Fact]
@@ -58,8 +58,8 @@ public class ThemeIconeContexteTests : IClassFixture<TestWebApplicationFactory>
 
         var state = await (await _client.GetAsync($"/api/boards/{created!.BoardId}")).Content.ReadFromJsonAsync<BoardStateDto>();
 
-        Assert.Equal("Qu'est-ce qui a tenu solide ce sprint ?", state!.Theme.Contexte);
-        Assert.Null(state.Theme.Icone);
+        Assert.Equal("Qu'est-ce qui a tenu solide ce sprint ?", state!.Etapes[0].Theme!.Contexte);
+        Assert.Null(state.Etapes[0].Theme!.Icone);
     }
 
     [Fact]
@@ -79,8 +79,8 @@ public class ThemeIconeContexteTests : IClassFixture<TestWebApplicationFactory>
 
         var state = await (await _client.GetAsync($"/api/boards/{created!.BoardId}")).Content.ReadFromJsonAsync<BoardStateDto>();
 
-        Assert.Null(state!.Theme.Icone);
-        Assert.Null(state.Theme.Contexte);
+        Assert.Null(state!.Etapes[0].Theme!.Icone);
+        Assert.Null(state.Etapes[0].Theme!.Contexte);
     }
 
     [Fact]

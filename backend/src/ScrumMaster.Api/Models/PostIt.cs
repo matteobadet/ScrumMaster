@@ -4,9 +4,10 @@ public class PostIt
 {
     public Guid Id { get; set; }
 
-    public Guid BoardId { get; set; }
+    /// <summary>Étape "Colonnes et post-its" qui porte ce post-it (renommé depuis BoardId, specs/006-systeme-extensions-etapes).</summary>
+    public Guid EtapeId { get; set; }
 
-    public Board? Board { get; set; }
+    public Etape? Etape { get; set; }
 
     public Guid ColonneId { get; set; }
 

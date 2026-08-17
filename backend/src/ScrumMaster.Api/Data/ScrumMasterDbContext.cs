@@ -34,6 +34,16 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
 
     public DbSet<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey> DataProtectionKeys { get; set; } = null!;
 
+    public DbSet<Etape> Etapes => Set<Etape>();
+
+    public DbSet<MiniJeuCatalogue> MiniJeuxCatalogue => Set<MiniJeuCatalogue>();
+
+    public DbSet<ReponseMeteoEquipe> ReponsesMeteoEquipe => Set<ReponseMeteoEquipe>();
+
+    public DbSet<OptionPollPersonnalise> OptionsPollPersonnalise => Set<OptionPollPersonnalise>();
+
+    public DbSet<ReponsePollPersonnalise> ReponsesPollPersonnalise => Set<ReponsePollPersonnalise>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Equipe>(entity =>
@@ -68,11 +78,6 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
                 .WithMany(eq => eq.Boards)
                 .HasForeignKey(e => e.AreaPath)
                 .OnDelete(DeleteBehavior.Restrict);
-            entity
-                .HasOne(e => e.Theme)
-                .WithMany()
-                .HasForeignKey(e => e.ThemeId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Participant>(entity =>
@@ -91,9 +96,9 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Texte).IsRequired();
             entity
-                .HasOne(e => e.Board)
-                .WithMany(b => b.PostIts)
-                .HasForeignKey(e => e.BoardId)
+                .HasOne(e => e.Etape)
+                .WithMany(et => et.PostIts)
+                .HasForeignKey(e => e.EtapeId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity
                 .HasOne(e => e.Colonne)
@@ -166,6 +171,81 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
                 .WithOne()
                 .HasForeignKey<ConfigurationAzureDevOps>(e => e.AreaPath)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Etape>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity
+                .HasOne(e => e.Board)
+                .WithMany(b => b.Etapes)
+                .HasForeignKey(e => e.BoardId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne(e => e.Theme)
+                .WithMany()
+                .HasForeignKey(e => e.ThemeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity
+                .HasOne(e => e.MiniJeuCatalogue)
+                .WithMany()
+                .HasForeignKey(e => e.MiniJeuCatalogueId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.BoardId, e.Ordre }).IsUnique();
+        });
+
+        modelBuilder.Entity<MiniJeuCatalogue>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Nom).IsRequired();
+            entity.Property(e => e.TypeInterne).IsRequired();
+            entity.HasIndex(e => e.TypeInterne).IsUnique();
+        });
+
+        modelBuilder.Entity<ReponseMeteoEquipe>(entity =>
+        {
+            entity.HasKey(e => new { e.EtapeId, e.ParticipantId });
+            entity
+                .HasOne(e => e.Etape)
+                .WithMany(et => et.ReponsesMeteo)
+                .HasForeignKey(e => e.EtapeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne(e => e.Participant)
+                .WithMany()
+                .HasForeignKey(e => e.ParticipantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OptionPollPersonnalise>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Texte).IsRequired();
+            entity
+                .HasOne(e => e.Etape)
+                .WithMany(et => et.Options)
+                .HasForeignKey(e => e.EtapeId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ReponsePollPersonnalise>(entity =>
+        {
+            entity.HasKey(e => new { e.EtapeId, e.ParticipantId });
+            entity
+                .HasOne(e => e.Etape)
+                .WithMany(et => et.Reponses)
+                .HasForeignKey(e => e.EtapeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne(e => e.Participant)
+                .WithMany()
+                .HasForeignKey(e => e.ParticipantId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne(e => e.Option)
+                .WithMany()
+                .HasForeignKey(e => e.OptionId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

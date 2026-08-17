@@ -8,11 +8,13 @@ import type {
   EquipeAzureDevOps,
   IterationAzureDevOps,
   JoinBoardResponse,
+  MiniJeuRef,
   ThemeSummary,
 } from '../types';
 
 export const boardsApi = {
   getThemes: () => apiClient.get<ThemeSummary[]>('/api/themes'),
+  getMiniJeux: () => apiClient.get<MiniJeuRef[]>('/api/mini-jeux'),
   createBoard: (request: CreateBoardRequest) =>
     apiClient.post<CreateBoardResponse>('/api/boards', request),
   getBoard: (boardId: string, asParticipantId?: string) =>

@@ -32,6 +32,11 @@ builder.Services.AddScoped<PollService>();
 builder.Services.AddScoped<RappelService>();
 builder.Services.AddSingleton<PollCardBuilder>();
 
+// Système d'extensions/étapes (specs/006-systeme-extensions-etapes)
+builder.Services.AddScoped<EtapeService>();
+builder.Services.AddScoped<MiniJeuService>();
+builder.Services.AddScoped<PollPersonnaliseService>();
+
 // Azure DevOps (specs/005-azure-devops-boards) — le PAT est chiffré via Data Protection avant
 // stockage ; l'anneau de clés est persisté dans PostgreSQL (research.md#2) pour survivre aux
 // redémarrages de pod et être partagé entre réplicas sur k3s.
@@ -79,6 +84,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     await ThemeSeeder.EnsureSeededAsync(db);
+    await MiniJeuSeeder.EnsureSeededAsync(db);
 }
 
 // Configure the HTTP request pipeline.

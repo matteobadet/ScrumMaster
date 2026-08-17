@@ -31,7 +31,7 @@ public class BoardClosureTests : IClassFixture<TestWebApplicationFactory>
         await connection.StartAsync();
         await connection.InvokeAsync("JoinBoard", boardId, autreParticipantId);
 
-        var ex = await Assert.ThrowsAsync<HubException>(() => connection.InvokeAsync("CloseBoard", boardId));
+        var ex = await Assert.ThrowsAsync<HubException>(() => connection.InvokeAsync("AvancerEtape", boardId));
 
         Assert.Contains("facilitateur", ex.Message);
     }
@@ -48,7 +48,7 @@ public class BoardClosureTests : IClassFixture<TestWebApplicationFactory>
         var closedTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         using var sub = connection.On<object>("BoardClosed", _ => closedTcs.TrySetResult(true));
 
-        await connection.InvokeAsync("CloseBoard", boardId);
+        await connection.InvokeAsync("AvancerEtape", boardId);
         await closedTcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
         var response = await _client.GetAsync($"/api/boards/{boardId}");
@@ -64,10 +64,10 @@ public class BoardClosureTests : IClassFixture<TestWebApplicationFactory>
         await using var connection = CreateConnection();
         await connection.StartAsync();
         await connection.InvokeAsync("JoinBoard", boardId, facilitateurId);
-        await connection.InvokeAsync("CloseBoard", boardId);
+        await connection.InvokeAsync("AvancerEtape", boardId);
 
-        var ex = await Assert.ThrowsAsync<HubException>(() => connection.InvokeAsync("CloseBoard", boardId));
-        Assert.Contains("déjà", ex.Message);
+        var ex = await Assert.ThrowsAsync<HubException>(() => connection.InvokeAsync("AvancerEtape", boardId));
+        Assert.Contains("clôturé", ex.Message);
     }
 
     [Theory]
@@ -86,7 +86,7 @@ public class BoardClosureTests : IClassFixture<TestWebApplicationFactory>
         await using var connection = CreateConnection();
         await connection.StartAsync();
         await connection.InvokeAsync("JoinBoard", boardId, facilitateurId);
-        await connection.InvokeAsync("CloseBoard", boardId);
+        await connection.InvokeAsync("AvancerEtape", boardId);
 
         var invocation = methode switch
         {
@@ -101,14 +101,20 @@ public class BoardClosureTests : IClassFixture<TestWebApplicationFactory>
         };
 
         var ex = await Assert.ThrowsAsync<HubException>(() => invocation);
-        Assert.Contains("clôturé", ex.Message);
+
+        // AddPostIt/ChangeTheme résolvent l'étape via le board et rejettent au niveau board
+        // ("clôturé") ; les autres mutations résolvent directement le post-it/vote et rejettent
+        // au niveau de l'étape (devenue Terminee en même temps que le board se clôture, puisque
+        // ce board n'a qu'une seule étape — specs/006-systeme-extensions-etapes).
+        var messageAttendu = methode is "AddPostIt" or "ChangeTheme" ? "clôturé" : "plus active";
+        Assert.Contains(messageAttendu, ex.Message);
     }
 
     private async Task<Guid> GetFirstPostItIdAsync(Guid boardId)
     {
         var response = await _client.GetAsync($"/api/boards/{boardId}");
         var state = await response.Content.ReadFromJsonAsync<BoardStateDto>();
-        return state!.PostIts[0].Id;
+        return state!.Etapes[0].PostIts![0].Id;
     }
 
     private async Task<Guid> JoinBoardAsync(Guid boardId, string nomAffiche)
@@ -126,7 +132,7 @@ public class BoardClosureTests : IClassFixture<TestWebApplicationFactory>
 
         var stateResponse = await _client.GetAsync($"/api/boards/{created!.BoardId}");
         var state = await stateResponse.Content.ReadFromJsonAsync<BoardStateDto>();
-        var colonnes = state!.Colonnes.Select(c => c.Id).ToList();
+        var colonnes = state!.Etapes[0].Colonnes!.Select(c => c.Id).ToList();
 
         await using var connection = CreateConnection();
         await connection.StartAsync();

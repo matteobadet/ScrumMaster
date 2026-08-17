@@ -46,6 +46,7 @@ public class AzureDevOpsBoardService(ScrumMasterDbContext db, AzureDevOpsClient 
     public async Task<IReadOnlyList<PostItImporteResult>> ImporterWorkItemsAsync(Guid boardId, Guid callerParticipantId)
     {
         var board = await ObtenirBoardPourFacilitateurAsync(boardId, callerParticipantId, "importer des work items");
+        var etapeActive = ObtenirEtapeActiveColonnesEtPostIts(board);
         var configuration = await db.ConfigurationsAzureDevOps.FirstOrDefaultAsync(c => c.AreaPath == board.AreaPath);
         if (configuration is null)
         {
@@ -63,7 +64,7 @@ public class AzureDevOpsBoardService(ScrumMasterDbContext db, AzureDevOpsClient 
         }
 
         var dejaImportes = await db
-            .PostIts.Where(p => p.BoardId == boardId && p.WorkItemSourceId != null)
+            .PostIts.Where(p => p.EtapeId == etapeActive.Id && p.WorkItemSourceId != null)
             .Select(p => p.WorkItemSourceId!.Value)
             .ToListAsync();
 
@@ -73,7 +74,7 @@ public class AzureDevOpsBoardService(ScrumMasterDbContext db, AzureDevOpsClient 
             return [];
         }
 
-        var premiereColonne = await db.Colonnes.Where(c => c.ThemeId == board.ThemeId).OrderBy(c => c.Ordre).FirstAsync();
+        var premiereColonne = await db.Colonnes.Where(c => c.ThemeId == etapeActive.ThemeId).OrderBy(c => c.Ordre).FirstAsync();
         var facilitateur = await db.Participants.FirstAsync(p => p.Id == callerParticipantId);
         var maintenant = DateTimeOffset.UtcNow;
 
@@ -81,7 +82,7 @@ public class AzureDevOpsBoardService(ScrumMasterDbContext db, AzureDevOpsClient 
             .Select(w => new PostIt
             {
                 Id = Guid.NewGuid(),
-                BoardId = boardId,
+                EtapeId = etapeActive.Id,
                 ColonneId = premiereColonne.Id,
                 Texte = w.Titre,
                 AuteurParticipantId = callerParticipantId,
@@ -101,13 +102,14 @@ public class AzureDevOpsBoardService(ScrumMasterDbContext db, AzureDevOpsClient 
     public async Task<PostItExporteResult> ExporterPostItAsync(Guid boardId, Guid callerParticipantId, Guid postItId)
     {
         var board = await ObtenirBoardPourFacilitateurAsync(boardId, callerParticipantId, "exporter un post-it");
+        var etapeActive = ObtenirEtapeActiveColonnesEtPostIts(board);
         var configuration = await db.ConfigurationsAzureDevOps.FirstOrDefaultAsync(c => c.AreaPath == board.AreaPath);
         if (configuration is null)
         {
             throw new DomainValidationException("Cette équipe n'a pas d'accès Azure DevOps configuré.");
         }
 
-        var postIt = await db.PostIts.FirstOrDefaultAsync(p => p.Id == postItId && p.BoardId == boardId);
+        var postIt = await db.PostIts.FirstOrDefaultAsync(p => p.Id == postItId && p.EtapeId == etapeActive.Id);
         if (postIt is null)
         {
             throw new DomainNotFoundException($"Post-it {postItId} introuvable sur ce board.");
@@ -147,7 +149,7 @@ public class AzureDevOpsBoardService(ScrumMasterDbContext db, AzureDevOpsClient 
 
     private async Task<Board> ObtenirBoardPourFacilitateurAsync(Guid boardId, Guid callerParticipantId, string action)
     {
-        var board = await db.Boards.FirstOrDefaultAsync(b => b.Id == boardId);
+        var board = await db.Boards.Include(b => b.Etapes).FirstOrDefaultAsync(b => b.Id == boardId);
         if (board is null)
         {
             throw new DomainNotFoundException($"Board {boardId} introuvable.");
@@ -167,6 +169,18 @@ public class AzureDevOpsBoardService(ScrumMasterDbContext db, AzureDevOpsClient 
         BoardClosureGuard.EnsureActif(board);
 
         return board;
+    }
+
+    /// <summary>Résout l'étape "Colonnes et post-its" active du board (specs/006-systeme-extensions-etapes, research.md#5).</summary>
+    private static Etape ObtenirEtapeActiveColonnesEtPostIts(Board board)
+    {
+        var active = board.Etapes.FirstOrDefault(e => e.Statut == StatutEtape.Active);
+        if (active is null || active.Type != TypeEtape.ColonnesEtPostIts)
+        {
+            throw new DomainValidationException("L'étape active de ce board n'accepte pas l'import/export Azure DevOps.");
+        }
+
+        return active;
     }
 
     private string Dechiffrer(ConfigurationAzureDevOps configuration) => _protector.Unprotect(configuration.PatChiffre);
