@@ -198,3 +198,11 @@ export interface PointDeSprint {
   totalPlanifie: number;
   totalTermine: number;
 }
+
+/** Résumé d'un board dans l'historique d'une équipe (specs/010-historique-boards). */
+export interface BoardSummary {
+  id: string;
+  iteration: string;
+  statut: 'Actif' | 'Cloture';
+  dateCreation: string;
+}

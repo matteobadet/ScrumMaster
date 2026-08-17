@@ -4,6 +4,7 @@ import { CreateBoardPage } from './pages/CreateBoardPage';
 import { JoinBoardPage } from './pages/JoinBoardPage';
 import { BoardPage } from './pages/BoardPage';
 import { AzureDevOpsConfigPage } from './pages/AzureDevOpsConfigPage';
+import { BoardHistoryPage } from './pages/BoardHistoryPage';
 import { SiteHeader } from './components/SiteHeader';
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
           <Route path="/join/:boardId" element={<JoinBoardPage />} />
           <Route path="/board/:boardId" element={<BoardPage />} />
           <Route path="/equipe/:areaPath/azure-devops" element={<AzureDevOpsConfigPage />} />
+          <Route path="/equipe/:areaPath/boards" element={<BoardHistoryPage />} />
         </Routes>
       </main>
     </div>

@@ -42,4 +42,12 @@ public class BoardsController(BoardService boardService, ParticipantService part
             )
         );
     }
+
+    /// <summary>Route absolue hors du préfixe "api/boards" (specs/010-historique-boards, research.md#1).</summary>
+    [HttpGet("/api/equipes/{areaPath}/boards")]
+    public async Task<ActionResult<IReadOnlyList<BoardSummaireDto>>> ListerBoardsParEquipe(string areaPath)
+    {
+        var boards = await boardService.ListerBoardsParEquipeAsync(areaPath);
+        return Ok(boards);
+    }
 }

@@ -37,6 +37,8 @@ public record ChangeThemeRequest(Guid? ThemeId, ThemePersonnaliseDto? ThemePerso
 
 public record ChangeThemeResult(Guid ThemeId, string Nom, string? Icone, string? Contexte, IReadOnlyList<ColonneDto> Colonnes);
 
+public record BoardSummaireDto(Guid Id, string Iteration, string Statut, DateTimeOffset DateCreation);
+
 public record BoardStateDto(
     Guid BoardId,
     string AreaPath,

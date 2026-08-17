@@ -63,6 +63,14 @@ public class BoardService(ScrumMasterDbContext db, EtapeService etapeService)
         return new CreateBoardResponse(board.Id, facilitateur.Id, facilitateur.Role.ToString(), $"/board/{board.Id}");
     }
 
+    /// <summary>Boards d'une équipe, triés du plus récent au plus ancien (specs/010-historique-boards).</summary>
+    public async Task<IReadOnlyList<BoardSummaireDto>> ListerBoardsParEquipeAsync(string areaPath) =>
+        await db
+            .Boards.Where(b => b.AreaPath == areaPath)
+            .OrderByDescending(b => b.DateCreation)
+            .Select(b => new BoardSummaireDto(b.Id, b.Iteration, b.Statut.ToString(), b.DateCreation))
+            .ToListAsync();
+
     public async Task<BoardStateDto> GetBoardStateAsync(Guid boardId, Guid? asParticipantId = null)
     {
         var board = await db

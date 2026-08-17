@@ -197,6 +197,9 @@ export function BoardPage() {
         {showPointDeSprint && boardId && (
           <PointDeSprintPanel boardId={boardId} participantId={participant!.participantId} />
         )}
+        <Link className="text-link" to={`/equipe/${board.areaPath}/boards`}>
+          Historique des boards de l'équipe
+        </Link>
 
         {board.etapes.length > 1 && (
           <ol className="etape-stepper">

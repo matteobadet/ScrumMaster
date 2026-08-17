@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { boardsApi } from '../services/boardsApi';
 import { participantStorage } from '../services/participantStorage';
 import { ApiError } from '../services/apiClient';
@@ -191,6 +191,12 @@ export function CreateBoardPage() {
             Area Path
             <input value={areaPath} onChange={(e) => setAreaPath(e.target.value)} placeholder="ex : Krypton" required />
           </label>
+        )}
+
+        {areaPath && (
+          <Link className="text-link" to={`/equipe/${areaPath}/boards`}>
+            Voir l'historique des boards de cette équipe
+          </Link>
         )}
 
         {areaPathMode === 'equipe' && !iterationsIndisponibles && iterations.length > 0 ? (

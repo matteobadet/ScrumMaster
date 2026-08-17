@@ -3,6 +3,7 @@ import type {
   AzureDevOpsConfigRequest,
   AzureDevOpsConfigResponse,
   BoardState,
+  BoardSummary,
   CreateBoardRequest,
   CreateBoardResponse,
   EquipeAzureDevOps,
@@ -31,4 +32,5 @@ export const boardsApi = {
     apiClient.get<IterationAzureDevOps[]>(`/api/equipes/${areaPath}/azure-devops/iterations`),
   obtenirPointDeSprint: (boardId: string, participantId: string) =>
     apiClient.get<PointDeSprint>(`/api/boards/${boardId}/point-de-sprint?asParticipantId=${participantId}`),
+  listerBoardsParEquipe: (areaPath: string) => apiClient.get<BoardSummary[]>(`/api/equipes/${areaPath}/boards`),
 };
