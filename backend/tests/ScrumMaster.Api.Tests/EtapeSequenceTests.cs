@@ -21,6 +21,16 @@ public class EtapeSequenceTests : IClassFixture<TestWebApplicationFactory>
 
     private record EtapeChangeeEnvelope(Guid NouvelleEtapeId);
 
+    private static EtapeRequestDto EtapeColonnesEtPostIts(string themeName, params string[] intitules) =>
+        new(
+            "ColonnesEtPostIts",
+            null,
+            new ThemePersonnaliseDto(themeName, null, null, intitules.Select(i => new ColonneSummaireDto(i, null, null)).ToList()),
+            null,
+            null,
+            null
+        );
+
     [Fact]
     public async Task CreateBoard_AvecSequenceExplicite_SeuleLaPremiereEtapeEstActive()
     {
@@ -33,8 +43,8 @@ public class EtapeSequenceTests : IClassFixture<TestWebApplicationFactory>
             NomAffiche: "Alex",
             Etapes:
             [
-                new EtapeRequestDto("ColonnesEtPostIts", null, new ThemePersonnaliseDto("Icebreaker", null, null, ["Météo"]), null, null, null),
-                new EtapeRequestDto("ColonnesEtPostIts", null, new ThemePersonnaliseDto("Retro", null, null, ["Start", "Stop"]), null, null, null),
+                EtapeColonnesEtPostIts("Icebreaker", "Météo"),
+                EtapeColonnesEtPostIts("Retro", "Start", "Stop"),
             ]
         );
 
@@ -63,8 +73,8 @@ public class EtapeSequenceTests : IClassFixture<TestWebApplicationFactory>
             "Alex",
             Etapes:
             [
-                new EtapeRequestDto("ColonnesEtPostIts", null, new ThemePersonnaliseDto("Icebreaker", null, null, ["Météo"]), null, null, null),
-                new EtapeRequestDto("ColonnesEtPostIts", null, new ThemePersonnaliseDto("Retro", null, null, ["Start", "Stop"]), null, null, null),
+                EtapeColonnesEtPostIts("Icebreaker", "Météo"),
+                EtapeColonnesEtPostIts("Retro", "Start", "Stop"),
             ]
         );
 

@@ -87,7 +87,14 @@ public class MiniJeuTests : IClassFixture<TestWebApplicationFactory>
             ? [new EtapeRequestDto("MiniJeu", null, null, miniJeuId, null, null)]
             :
             [
-                new EtapeRequestDto("ColonnesEtPostIts", null, new ThemePersonnaliseDto("Icebreaker", null, null, ["A"]), null, null, null),
+                new EtapeRequestDto(
+                    "ColonnesEtPostIts",
+                    null,
+                    new ThemePersonnaliseDto("Icebreaker", null, null, [new ColonneSummaireDto("A", null, null)]),
+                    null,
+                    null,
+                    null
+                ),
                 new EtapeRequestDto("MiniJeu", null, null, miniJeuId, null, null),
             ];
 

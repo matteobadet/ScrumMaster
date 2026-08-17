@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { boardsApi } from '../services/boardsApi';
 import { participantStorage } from '../services/participantStorage';
 import { ApiError } from '../services/apiClient';
-import { ThemeEditor } from '../components/ThemeEditor';
+import { ThemeEditor, buildColonnesPersonnalisees } from '../components/ThemeEditor';
 import { EtapeSequenceEditor, buildEtapeRequests, creerEtapeBuilder, type EtapeBuilder } from '../components/EtapeSequenceEditor';
-import type { EquipeAzureDevOps, EtapeRequest, IterationAzureDevOps, MiniJeuRef, ThemeSelection, ThemeSummary } from '../types';
+import type { ColonneSummaire, EquipeAzureDevOps, EtapeRequest, IterationAzureDevOps, MiniJeuRef, ThemeSelection, ThemeSummary } from '../types';
 
 export function CreateBoardPage() {
   const navigate = useNavigate();
@@ -103,13 +103,14 @@ export function CreateBoardPage() {
     event.preventDefault();
     setError(null);
 
-    let colonnesNonVides: string[] = [];
+    let colonnesNonVides: ColonneSummaire[] = [];
     if (!sequenceMode && themeSelection.kind === 'custom') {
-      colonnesNonVides = themeSelection.colonnes.map((c) => c.trim()).filter(Boolean);
-      if (colonnesNonVides.length === 0) {
-        setError('Un thème personnalisé doit comporter au moins une colonne.');
+      const built = buildColonnesPersonnalisees(themeSelection.colonnes);
+      if (built.error) {
+        setError(built.error);
         return;
       }
+      colonnesNonVides = built.colonnes;
     }
 
     let etapes: EtapeRequest[] | undefined;

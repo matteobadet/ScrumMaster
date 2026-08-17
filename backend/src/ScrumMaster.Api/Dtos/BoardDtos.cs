@@ -18,7 +18,7 @@ public record JoinBoardResponse(Guid ParticipantId, string Role);
 
 public record ThemeRefDto(Guid Id, string Nom, string? Icone, string? Contexte);
 
-public record ColonneDto(Guid Id, string Intitule, int Ordre);
+public record ColonneDto(Guid Id, string Intitule, int Ordre, string? Couleur, string? UrlIllustration);
 
 public record PostItDto(
     Guid Id,

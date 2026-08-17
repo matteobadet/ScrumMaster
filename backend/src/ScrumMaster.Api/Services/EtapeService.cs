@@ -184,12 +184,17 @@ public class EtapeService(ScrumMasterDbContext db)
                 throw new DomainValidationException($"Thème {id} introuvable.");
             }
 
-            return CopyTheme(source.Nom, source.Icone, source.Contexte, source.Colonnes.OrderBy(c => c.Ordre).Select(c => c.Intitule));
+            return CopyTheme(
+                source.Nom,
+                source.Icone,
+                source.Contexte,
+                source.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneSummaireDto(c.Intitule, c.Couleur, c.UrlIllustration))
+            );
         }
 
         if (themePersonnalise is not null)
         {
-            var colonnes = themePersonnalise.Colonnes.Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
+            var colonnes = themePersonnalise.Colonnes.Where(c => !string.IsNullOrWhiteSpace(c.Intitule)).ToList();
             if (colonnes.Count == 0)
             {
                 throw new DomainValidationException("Un thème doit comporter au moins une colonne.");
@@ -205,6 +210,12 @@ public class EtapeService(ScrumMasterDbContext db)
                 throw new DomainValidationException("Le contexte du thème ne doit pas dépasser 500 caractères.");
             }
 
+            foreach (var colonne in colonnes)
+            {
+                ValidateCouleur(colonne.Couleur);
+                ValidateUrlIllustration(colonne.UrlIllustration);
+            }
+
             return CopyTheme(themePersonnalise.Nom, themePersonnalise.Icone, themePersonnalise.Contexte, colonnes);
         }
 
@@ -214,10 +225,46 @@ public class EtapeService(ScrumMasterDbContext db)
             throw new DomainValidationException("Aucun thème par défaut n'est configuré.");
         }
 
-        return CopyTheme(defaut.Nom, defaut.Icone, defaut.Contexte, defaut.Colonnes.OrderBy(c => c.Ordre).Select(c => c.Intitule));
+        return CopyTheme(
+            defaut.Nom,
+            defaut.Icone,
+            defaut.Contexte,
+            defaut.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneSummaireDto(c.Intitule, c.Couleur, c.UrlIllustration))
+        );
     }
 
-    private static Theme CopyTheme(string nom, string? icone, string? contexte, IEnumerable<string> colonnes)
+    /// <summary>Longueur de la couleur de colonne (research.md#1, data-model.md).</summary>
+    private static void ValidateCouleur(string? couleur)
+    {
+        if (couleur?.Length > 30)
+        {
+            throw new DomainValidationException("La couleur d'une colonne ne doit pas dépasser 30 caractères.");
+        }
+    }
+
+    /// <summary>
+    /// L'URL d'illustration DOIT être une adresse HTTPS syntaxiquement valide (FR-009) ; jamais
+    /// récupérée côté serveur (research.md#2/#3).
+    /// </summary>
+    private static void ValidateUrlIllustration(string? url)
+    {
+        if (string.IsNullOrEmpty(url))
+        {
+            return;
+        }
+
+        if (url.Length > 2048)
+        {
+            throw new DomainValidationException("L'URL d'illustration d'une colonne ne doit pas dépasser 2048 caractères.");
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+        {
+            throw new DomainValidationException("L'URL d'illustration d'une colonne doit être une adresse HTTPS valide.");
+        }
+    }
+
+    private static Theme CopyTheme(string nom, string? icone, string? contexte, IEnumerable<ColonneSummaireDto> colonnes)
     {
         var theme = new Theme
         {
@@ -230,7 +277,17 @@ public class EtapeService(ScrumMasterDbContext db)
         };
 
         theme.Colonnes = colonnes
-            .Select((intitule, index) => new Colonne { Id = Guid.NewGuid(), ThemeId = theme.Id, Intitule = intitule, Ordre = index })
+            .Select(
+                (colonne, index) => new Colonne
+                {
+                    Id = Guid.NewGuid(),
+                    ThemeId = theme.Id,
+                    Intitule = colonne.Intitule,
+                    Ordre = index,
+                    Couleur = colonne.Couleur,
+                    UrlIllustration = colonne.UrlIllustration,
+                }
+            )
             .ToList();
 
         return theme;

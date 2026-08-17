@@ -66,6 +66,8 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Intitule).IsRequired();
+            entity.Property(e => e.Couleur).HasMaxLength(30);
+            entity.Property(e => e.UrlIllustration).HasMaxLength(2048);
         });
 
         modelBuilder.Entity<Board>(entity =>

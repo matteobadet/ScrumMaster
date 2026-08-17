@@ -161,7 +161,7 @@ public class BoardService(ScrumMasterDbContext db, EtapeService etapeService)
             theme.Nom,
             theme.Icone,
             theme.Contexte,
-            theme.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre)).ToList()
+            theme.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre, c.Couleur, c.UrlIllustration)).ToList()
         );
     }
 
@@ -184,7 +184,7 @@ public class BoardService(ScrumMasterDbContext db, EtapeService etapeService)
                     etape.Ordre,
                     etape.Statut.ToString(),
                     new ThemeRefDto(etape.Theme.Id, etape.Theme.Nom, etape.Theme.Icone, etape.Theme.Contexte),
-                    colonnes.Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre)).ToList(),
+                    colonnes.Select(c => new ColonneDto(c.Id, c.Intitule, c.Ordre, c.Couleur, c.UrlIllustration)).ToList(),
                     etape
                         .PostIts.OrderBy(p => p.DateCreation)
                         .Select(p => new PostItDto(

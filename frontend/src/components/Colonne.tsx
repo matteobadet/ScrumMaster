@@ -48,8 +48,22 @@ export function Colonne({
   }
 
   return (
-    <div className="colonne">
-      <h2>{colonne.intitule}</h2>
+    <div className="colonne" style={colonne.couleur ? { backgroundColor: colonne.couleur } : undefined}>
+      <div className="colonne-header">
+        <h2>{colonne.intitule}</h2>
+        {colonne.urlIllustration && (
+          <img
+            className="colonne-illustration"
+            src={colonne.urlIllustration}
+            alt=""
+            aria-hidden="true"
+            // Repli silencieux si le lien est cassé (FR-010) — la colonne reste utilisable.
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        )}
+      </div>
       <div className="post-its">
         {postIts.map((postIt) => (
           <PostIt

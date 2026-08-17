@@ -20,7 +20,7 @@ public class ThemesController(ScrumMasterDbContext db) : ControllerBase
                 t.Nom,
                 t.Icone,
                 t.Contexte,
-                t.Colonnes.OrderBy(c => c.Ordre).Select(c => c.Intitule).ToList()
+                t.Colonnes.OrderBy(c => c.Ordre).Select(c => new ColonneSummaireDto(c.Intitule, c.Couleur, c.UrlIllustration)).ToList()
             ))
             .ToList();
 

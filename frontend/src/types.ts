@@ -1,21 +1,28 @@
+/** Une colonne au sein d'un thème, avec son habillage visuel facultatif (specs/007-themes-visuels-colonnes). */
+export interface ColonneSummaire {
+  intitule: string;
+  couleur: string | null;
+  urlIllustration: string | null;
+}
+
 export interface ThemeSummary {
   id: string;
   nom: string;
   icone: string | null;
   contexte: string | null;
-  colonnes: string[];
+  colonnes: ColonneSummaire[];
 }
 
 export interface ThemePersonnalise {
   nom: string;
   icone: string | null;
   contexte: string | null;
-  colonnes: string[];
+  colonnes: ColonneSummaire[];
 }
 
 export type ThemeSelection =
   | { kind: 'predefined'; themeId: string }
-  | { kind: 'custom'; nom: string; icone: string; contexte: string; colonnes: string[] };
+  | { kind: 'custom'; nom: string; icone: string; contexte: string; colonnes: ColonneSummaire[] };
 
 /** Une étape demandée à la composition d'une séquence (US1, specs/006-systeme-extensions-etapes). */
 export interface EtapeRequest {
@@ -60,6 +67,8 @@ export interface ColonneState {
   id: string;
   intitule: string;
   ordre: number;
+  couleur: string | null;
+  urlIllustration: string | null;
 }
 
 export interface PostItState {

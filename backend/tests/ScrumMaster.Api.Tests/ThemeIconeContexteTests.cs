@@ -14,6 +14,9 @@ public class ThemeIconeContexteTests : IClassFixture<TestWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
+    private static IReadOnlyList<ColonneSummaireDto> Colonnes(params string[] intitules) =>
+        intitules.Select(i => new ColonneSummaireDto(i, null, null)).ToList();
+
     [Fact]
     public async Task CreateBoard_AvecThemePersonnaliseIcone_RenvoieLIconeSurLeBoard()
     {
@@ -21,7 +24,7 @@ public class ThemeIconeContexteTests : IClassFixture<TestWebApplicationFactory>
             AreaPath: "Krypton",
             Iteration: "Sprint-138",
             ThemeId: null,
-            ThemePersonnalise: new ThemePersonnaliseDto("Les 3 petits cochons", "🐷", null, ["Paille", "Bois", "Briques"]),
+            ThemePersonnalise: new ThemePersonnaliseDto("Les 3 petits cochons", "🐷", null, Colonnes("Paille", "Bois", "Briques")),
             MaxVotesParParticipant: null,
             NomAffiche: "Alex"
         );
@@ -47,7 +50,7 @@ public class ThemeIconeContexteTests : IClassFixture<TestWebApplicationFactory>
                 "Les 3 petits cochons",
                 null,
                 "Qu'est-ce qui a tenu solide ce sprint ?",
-                ["Paille", "Bois", "Briques"]
+                Colonnes("Paille", "Bois", "Briques")
             ),
             MaxVotesParParticipant: null,
             NomAffiche: "Alex"
@@ -69,7 +72,7 @@ public class ThemeIconeContexteTests : IClassFixture<TestWebApplicationFactory>
             AreaPath: "Krypton",
             Iteration: "Sprint-138",
             ThemeId: null,
-            ThemePersonnalise: new ThemePersonnaliseDto("Neutre", null, null, ["A", "B"]),
+            ThemePersonnalise: new ThemePersonnaliseDto("Neutre", null, null, Colonnes("A", "B")),
             MaxVotesParParticipant: null,
             NomAffiche: "Alex"
         );
@@ -91,7 +94,7 @@ public class ThemeIconeContexteTests : IClassFixture<TestWebApplicationFactory>
             AreaPath: "Krypton",
             Iteration: "Sprint-138",
             ThemeId: null,
-            ThemePersonnalise: new ThemePersonnaliseDto("Trop long", null, contexteTropLong, ["A"]),
+            ThemePersonnalise: new ThemePersonnaliseDto("Trop long", null, contexteTropLong, Colonnes("A")),
             MaxVotesParParticipant: null,
             NomAffiche: "Alex"
         );
@@ -109,7 +112,7 @@ public class ThemeIconeContexteTests : IClassFixture<TestWebApplicationFactory>
             AreaPath: "Krypton",
             Iteration: "Sprint-138",
             ThemeId: null,
-            ThemePersonnalise: new ThemePersonnaliseDto("Trop long", iconeTropLongue, null, ["A"]),
+            ThemePersonnalise: new ThemePersonnaliseDto("Trop long", iconeTropLongue, null, Colonnes("A")),
             MaxVotesParParticipant: null,
             NomAffiche: "Alex"
         );

@@ -11,4 +11,8 @@ public class Colonne
     public string Intitule { get; set; } = string.Empty;
 
     public int Ordre { get; set; }
+
+    public string? Couleur { get; set; }
+
+    public string? UrlIllustration { get; set; }
 }

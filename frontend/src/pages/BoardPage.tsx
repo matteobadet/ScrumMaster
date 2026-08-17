@@ -4,7 +4,7 @@ import { useRealtimeBoard } from '../hooks/useRealtimeBoard';
 import { participantStorage } from '../services/participantStorage';
 import { boardsApi } from '../services/boardsApi';
 import { Colonne } from '../components/Colonne';
-import { ThemeEditor } from '../components/ThemeEditor';
+import { ThemeEditor, buildColonnesPersonnalisees } from '../components/ThemeEditor';
 import { EtapeMiniJeuMeteo } from '../components/EtapeMiniJeuMeteo';
 import { EtapePollPersonnalise } from '../components/EtapePollPersonnalise';
 import type { EtapeState, ThemeSelection, ThemeSummary } from '../types';
@@ -101,16 +101,16 @@ export function BoardPage() {
     setThemeError(null);
 
     if (themeSelection.kind === 'custom') {
-      const colonnesNonVides = themeSelection.colonnes.map((c) => c.trim()).filter(Boolean);
-      if (colonnesNonVides.length === 0) {
-        setThemeError('Un thème personnalisé doit comporter au moins une colonne.');
+      const built = buildColonnesPersonnalisees(themeSelection.colonnes);
+      if (built.error) {
+        setThemeError(built.error);
         return;
       }
       invoke('ChangeTheme', boardId, null, {
         nom: themeSelection.nom || 'Thème personnalisé',
         icone: themeSelection.icone.trim() || null,
         contexte: themeSelection.contexte.trim() || null,
-        colonnes: colonnesNonVides,
+        colonnes: built.colonnes,
       });
     } else {
       invoke('ChangeTheme', boardId, themeSelection.themeId, null);

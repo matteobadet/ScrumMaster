@@ -1,5 +1,5 @@
 import type { EtapeRequest, MiniJeuRef, ThemeSelection, ThemeSummary } from '../types';
-import { ThemeEditor } from './ThemeEditor';
+import { ThemeEditor, buildColonnesPersonnalisees } from './ThemeEditor';
 
 export interface EtapeBuilder {
   id: string;
@@ -37,9 +37,9 @@ export function buildEtapeRequests(etapes: EtapeBuilder[]): { requests: EtapeReq
   for (const etape of etapes) {
     if (etape.type === 'ColonnesEtPostIts') {
       if (etape.themeSelection.kind === 'custom') {
-        const colonnesNonVides = etape.themeSelection.colonnes.map((c) => c.trim()).filter(Boolean);
-        if (colonnesNonVides.length === 0) {
-          return { error: 'Un thème personnalisé doit comporter au moins une colonne.' };
+        const built = buildColonnesPersonnalisees(etape.themeSelection.colonnes);
+        if (built.error) {
+          return { error: built.error };
         }
         requests.push({
           type: 'ColonnesEtPostIts',
@@ -47,7 +47,7 @@ export function buildEtapeRequests(etapes: EtapeBuilder[]): { requests: EtapeReq
             nom: etape.themeSelection.nom || 'Thème personnalisé',
             icone: etape.themeSelection.icone.trim() || null,
             contexte: etape.themeSelection.contexte.trim() || null,
-            colonnes: colonnesNonVides,
+            colonnes: built.colonnes,
           },
         });
       } else {

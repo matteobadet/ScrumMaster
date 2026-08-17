@@ -31,7 +31,12 @@ public class ThemeChangeTests : IClassFixture<TestWebApplicationFactory>
         var tcs = new TaskCompletionSource<ThemeChangedEnvelope>(TaskCreationOptions.RunContinuationsAsynchronously);
         using var sub = connection.On<ThemeChangedEnvelope>("ThemeChanged", e => tcs.TrySetResult(e));
 
-        var themePersonnalise = new ThemePersonnaliseDto("Mon thème", null, null, ["Continuer", "Arrêter", "Essayer"]);
+        var themePersonnalise = new ThemePersonnaliseDto(
+            "Mon thème",
+            null,
+            null,
+            [new ColonneSummaireDto("Continuer", null, null), new ColonneSummaireDto("Arrêter", null, null), new ColonneSummaireDto("Essayer", null, null)]
+        );
         await connection.InvokeAsync("ChangeTheme", boardId, null, themePersonnalise);
 
         var changed = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -49,7 +54,12 @@ public class ThemeChangeTests : IClassFixture<TestWebApplicationFactory>
         await connection.StartAsync();
         await connection.InvokeAsync("JoinBoard", boardId, autreParticipantId);
 
-        var themePersonnalise = new ThemePersonnaliseDto("Mon thème", null, null, ["A", "B"]);
+        var themePersonnalise = new ThemePersonnaliseDto(
+            "Mon thème",
+            null,
+            null,
+            [new ColonneSummaireDto("A", null, null), new ColonneSummaireDto("B", null, null)]
+        );
         var ex = await Assert.ThrowsAsync<HubException>(
             () => connection.InvokeAsync("ChangeTheme", boardId, null, themePersonnalise)
         );
@@ -73,7 +83,12 @@ public class ThemeChangeTests : IClassFixture<TestWebApplicationFactory>
             await addedTcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
         }
 
-        var themePersonnalise = new ThemePersonnaliseDto("Nouveau", null, null, ["Alpha", "Beta"]);
+        var themePersonnalise = new ThemePersonnaliseDto(
+            "Nouveau",
+            null,
+            null,
+            [new ColonneSummaireDto("Alpha", null, null), new ColonneSummaireDto("Beta", null, null)]
+        );
         await connection.InvokeAsync("ChangeTheme", boardId, null, themePersonnalise);
 
         var state = await GetBoardStateAsync(boardId);
