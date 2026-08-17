@@ -15,6 +15,12 @@ const TYPE_LABELS: Record<EtapeState['type'], string> = {
   PollPersonnalise: 'Poll personnalisé',
 };
 
+const STATUT_LABELS: Record<EtapeState['statut'], string> = {
+  AVenir: 'À venir',
+  Active: 'Active',
+  Terminee: 'Terminée',
+};
+
 export function BoardPage() {
   const { boardId } = useParams<{ boardId: string }>();
   const participant = useMemo(() => (boardId ? participantStorage.load(boardId) : null), [boardId]);
@@ -42,23 +48,37 @@ export function BoardPage() {
   }, []);
 
   if (!boardId) {
-    return <p>Board introuvable.</p>;
+    return (
+      <div className="page">
+        <p>Board introuvable.</p>
+      </div>
+    );
   }
 
   if (!participant) {
     return (
-      <p>
-        Vous devez d'abord rejoindre ce board. <Link to={`/join/${boardId}`}>Rejoindre le board</Link>
-      </p>
+      <div className="page page-narrow">
+        <p>
+          Vous devez d'abord rejoindre ce board. <Link to={`/join/${boardId}`}>Rejoindre le board</Link>
+        </p>
+      </div>
     );
   }
 
   if (error) {
-    return <p role="alert">{error}</p>;
+    return (
+      <div className="page">
+        <p role="alert">{error}</p>
+      </div>
+    );
   }
 
   if (!board) {
-    return <p>Chargement…</p>;
+    return (
+      <div className="page">
+        <p className="loading">Chargement…</p>
+      </div>
+    );
   }
 
   const estCloture = board.statut === 'Cloture';
@@ -146,75 +166,88 @@ export function BoardPage() {
   }
 
   return (
-    <div>
-      <h1>
-        {etapeActive?.theme?.icone && <span aria-hidden="true">{etapeActive.theme.icone} </span>}
-        {board.areaPath} — {board.iteration}
-      </h1>
-      {etapeActive?.theme?.contexte && <p className="theme-contexte">{etapeActive.theme.contexte}</p>}
-      <p>Participants : {board.participants.map((p) => p.nomAffiche).join(', ')}</p>
-      {etapeActive?.type === 'ColonnesEtPostIts' && <p>Mes votes restants : {etapeActive.mesVotesRestants ?? board.maxVotesParParticipant}</p>}
-      <p>
-        Lien à partager pour rejoindre :{' '}
-        <a href={`${window.location.origin}/join/${boardId}`}>{`${window.location.origin}/join/${boardId}`}</a>
-      </p>
+    <div className="page board-page">
+      <header className="board-header">
+        <h1>
+          {etapeActive?.theme?.icone && <span aria-hidden="true">{etapeActive.theme.icone} </span>}
+          {board.areaPath} — {board.iteration}
+        </h1>
+        {etapeActive?.theme?.contexte && <p className="theme-contexte">{etapeActive.theme.contexte}</p>}
 
-      {board.etapes.length > 1 && (
-        <ol className="etape-sequence-apercu">
-          {board.etapes.map((etape) => (
-            <li key={etape.id} aria-current={etape.statut === 'Active' ? 'step' : undefined}>
-              {TYPE_LABELS[etape.type]} — {etape.statut}
-            </li>
-          ))}
-        </ol>
-      )}
-
-      {estCloture && <p role="status">Ce board est clôturé — lecture seule.</p>}
-
-      {participant.role === 'Facilitateur' && !estCloture && (
-        <>
+        <div className="board-meta">
+          <span className="meta-pill">👥 {board.participants.map((p) => p.nomAffiche).join(', ')}</span>
           {etapeActive?.type === 'ColonnesEtPostIts' && (
-            <div className="theme-change">
-              <button type="button" onClick={() => setShowThemeEditor((v) => !v)}>
-                {showThemeEditor ? 'Annuler' : 'Changer le thème'}
-              </button>
-              {showThemeEditor && (
-                <>
-                  <ThemeEditor themes={themes} value={themeSelection} onChange={setThemeSelection} />
-                  {themeError && <p role="alert">{themeError}</p>}
-                  <button type="button" onClick={applyThemeChange}>
-                    Appliquer
-                  </button>
-                </>
-              )}
-            </div>
+            <span className="meta-pill">🗳️ {etapeActive.mesVotesRestants ?? board.maxVotesParParticipant} vote(s) restant(s)</span>
           )}
-          <button type="button" onClick={avancerEtape}>
-            {estDerniereEtapeActive ? 'Clôturer le board' : 'Étape suivante'}
-          </button>
-          {etapeActive?.type === 'ColonnesEtPostIts' && (
-            <>
-              <button type="button" onClick={() => invoke('ImportWorkItems', boardId)}>
-                Importer les work items
-              </button>
-              <p>
-                <Link to={`/equipe/${board.areaPath}/azure-devops`}>Configurer l'accès Azure DevOps de l'équipe</Link>
-              </p>
-            </>
-          )}
-        </>
+        </div>
+
+        <p className="share-link">
+          Lien à partager :{' '}
+          <a href={`${window.location.origin}/join/${boardId}`}>{`${window.location.origin}/join/${boardId}`}</a>
+        </p>
+
+        {board.etapes.length > 1 && (
+          <ol className="etape-stepper">
+            {board.etapes.map((etape) => (
+              <li key={etape.id} className={`etape-step etape-step--${etape.statut.toLowerCase()}`}>
+                <span className="etape-step-label">{TYPE_LABELS[etape.type]}</span>
+                <span className="etape-step-badge">{STATUT_LABELS[etape.statut] ?? etape.statut}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+
+        {estCloture && <p role="status">Ce board est clôturé — lecture seule.</p>}
+
+        {participant.role === 'Facilitateur' && !estCloture && (
+          <div className="board-actions">
+            {etapeActive?.type === 'ColonnesEtPostIts' && (
+              <div className="theme-change">
+                <button type="button" onClick={() => setShowThemeEditor((v) => !v)}>
+                  {showThemeEditor ? 'Annuler' : 'Changer le thème'}
+                </button>
+                {showThemeEditor && (
+                  <div className="theme-change-panel">
+                    <ThemeEditor themes={themes} value={themeSelection} onChange={setThemeSelection} />
+                    {themeError && <p role="alert">{themeError}</p>}
+                    <button type="button" onClick={applyThemeChange}>
+                      Appliquer
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            <button type="button" className="btn-primary" onClick={avancerEtape}>
+              {estDerniereEtapeActive ? 'Clôturer le board' : 'Étape suivante →'}
+            </button>
+            {etapeActive?.type === 'ColonnesEtPostIts' && (
+              <>
+                <button type="button" onClick={() => invoke('ImportWorkItems', boardId)}>
+                  Importer les work items
+                </button>
+                <Link className="text-link" to={`/equipe/${board.areaPath}/azure-devops`}>
+                  Configurer l'accès Azure DevOps de l'équipe
+                </Link>
+              </>
+            )}
+          </div>
+        )}
+      </header>
+
+      {etapeActive && <section className="etape-active">{renderEtape(etapeActive, false)}</section>}
+
+      {board.etapes.filter((etape) => etape.statut === 'Terminee').length > 0 && (
+        <section className="board-terminees">
+          {board.etapes
+            .filter((etape) => etape.statut === 'Terminee')
+            .map((etape) => (
+              <details key={etape.id} className="etape-terminee">
+                <summary>{TYPE_LABELS[etape.type]} (terminée) — consultation en lecture seule</summary>
+                {renderEtape(etape, true)}
+              </details>
+            ))}
+        </section>
       )}
-
-      {etapeActive && renderEtape(etapeActive, false)}
-
-      {board.etapes
-        .filter((etape) => etape.statut === 'Terminee')
-        .map((etape) => (
-          <details key={etape.id} className="etape-terminee">
-            <summary>{TYPE_LABELS[etape.type]} (terminée) — consultation en lecture seule</summary>
-            {renderEtape(etape, true)}
-          </details>
-        ))}
     </div>
   );
 }

@@ -13,7 +13,11 @@ export function AzureDevOpsConfigPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!areaPath) {
-    return <p>Équipe introuvable.</p>;
+    return (
+      <div className="page page-narrow">
+        <p>Équipe introuvable.</p>
+      </div>
+    );
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -33,13 +37,13 @@ export function AzureDevOpsConfigPage() {
   }
 
   return (
-    <div>
+    <div className="page page-narrow">
       <h1>Accès Azure DevOps — {areaPath}</h1>
-      <p>
+      <p className="page-lead">
         Configurez l'organisation, le projet et un Personal Access Token pour permettre à cette
         équipe de valider ses boards et d'importer/exporter des work items depuis Azure DevOps.
       </p>
-      <form onSubmit={handleSubmit}>
+      <form className="card form" onSubmit={handleSubmit}>
         <label>
           Organisation
           <input value={organisation} onChange={(e) => setOrganisation(e.target.value)} required />

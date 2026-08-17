@@ -157,9 +157,9 @@ export function CreateBoardPage() {
   }
 
   return (
-    <div>
+    <div className="page page-form">
       <h1>Créer un board de rétrospective</h1>
-      <form onSubmit={handleSubmit}>
+      <form className="card form" onSubmit={handleSubmit}>
         {equipesConfigurees.length > 0 && (
           <fieldset>
             <legend>Area Path</legend>

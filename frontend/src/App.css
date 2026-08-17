@@ -1,184 +1,568 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
+/* Shell & layout ---------------------------------------------------- */
 
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-}
-
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
-}
-
-#center {
+.app-shell {
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
 }
 
-#next-steps {
+.site-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: 14px 24px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--text-h);
+  font-weight: 750;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.brand-mark {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+  box-sizing: border-box;
+}
+
+.page {
   display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
+  flex-direction: column;
+  gap: 18px;
 }
 
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
+.page-narrow,
+.page-form {
+  max-width: 520px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-#next-steps ul {
+.page-lead {
+  color: var(--text-muted);
+}
+
+.loading {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Cards & forms ------------------------------------------------------ */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.btn-primary {
+  color: var(--accent-contrast) !important;
+  background: var(--accent) !important;
+  box-shadow: var(--shadow-sm);
+  font-size: 1rem;
+  padding: 11px 20px;
+}
+
+.btn-primary:hover {
+  background: var(--accent-h) !important;
+}
+
+.text-link {
+  font-size: 0.9rem;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
+/* Board header --------------------------------------------------------- */
+
+.board-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.theme-contexte {
+  color: var(--text-muted);
+  font-style: italic;
+  max-width: 60ch;
+}
+
+.board-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.share-link {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.share-link a {
+  font-weight: 600;
+}
+
+/* Étape stepper ---------------------------------------------------------- */
+
+.etape-stepper {
   list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 0;
   padding: 0;
+}
+
+.etape-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px 6px 8px;
+  font-size: 0.85rem;
+  background: var(--surface);
+}
+
+.etape-step-label {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.etape-step-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-radius: 999px;
+  padding: 2px 9px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.etape-step--active {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.etape-step--active .etape-step-badge {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.etape-step--terminee {
+  opacity: 0.75;
+}
+
+.etape-step--terminee .etape-step-badge {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.etape-step--avenir {
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+.etape-step--avenir .etape-step-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Board actions --------------------------------------------------------- */
+
+.board-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.theme-change {
+  display: contents;
+}
+
+.theme-change-panel {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-top: 4px;
+}
+
+/* Board grid & columns --------------------------------------------------- */
+
+.etape-active {
+  margin-top: 8px;
+}
+
+.board {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.colonne {
+  flex: 1 0 260px;
+  min-width: 260px;
+  max-width: 340px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.colonne h2 {
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border);
+}
+
+.post-its {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 40px;
+}
+
+.colonne form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.colonne textarea {
+  min-height: 52px;
+}
+
+/* Post-its (sticky notes) ------------------------------------------------ */
+
+.post-it {
+  background: var(--postit);
+  border: 1px solid var(--postit-border);
+  color: var(--postit-text);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+
+.post-it:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.post-it p {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.post-it-meta {
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.post-it-exporte {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.post-it label {
+  font-size: 0.78rem;
+  color: inherit;
+  opacity: 0.85;
+  gap: 4px;
+}
+
+.post-it select {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.post-it button {
+  align-self: flex-start;
+  font-size: 0.82rem;
+  padding: 5px 10px;
+}
+
+.vote-counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.vote-counter button {
+  font-size: 0.82rem;
+  padding: 5px 10px;
+}
+
+/* Étape "Colonnes et post-its" terminée / lecture seule ---------------------- */
+
+.board-terminees {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.etape-terminee {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 16px 16px;
+  background: var(--surface);
+}
+
+.etape-terminee summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-weight: 600;
+  color: var(--text-muted);
+  list-style: none;
+}
+
+.etape-terminee summary::-webkit-details-marker {
+  display: none;
+}
+
+.etape-terminee summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 8px;
+  transition: transform 0.15s;
+}
+
+.etape-terminee[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.etape-terminee .board .post-it {
+  opacity: 0.85;
+}
+
+/* Étape "Mini-jeu" -------------------------------------------------------- */
+
+.etape-mini-jeu {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meteo-choix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.meteo-choix button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  color: var(--text-h);
+}
+
+.meteo-choix button[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.meteo-reponses {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+}
+
+.meteo-reponses li {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.85rem;
+}
+
+/* Étape "Poll personnalisé" ------------------------------------------------ */
+
+.etape-poll-personnalise {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.poll-options {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+}
+
+.poll-options li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.92rem;
+}
+
+.poll-options label {
+  flex-direction: row;
+  align-items: center;
+  font-weight: 500;
+  gap: 10px;
+}
+
+.etape-poll-personnalise p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Étape sequence composer (CreateBoardPage) ------------------------------- */
+
+.etape-sequence-editor {
+  gap: 16px;
+}
+
+.etape-builder {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.etape-builder > p:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  color: var(--text-h);
+  margin: 0;
+}
+
+.etape-builder > p:first-child label {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.etape-builder hr {
+  display: none;
+}
+
+.etape-builder-actions {
   display: flex;
   gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
+  flex-wrap: wrap;
 }
 
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
+.etape-builder-actions button {
+  font-size: 0.82rem;
+  padding: 6px 12px;
 }
 
-.ticks {
-  position: relative;
-  width: 100%;
+.etape-sequence-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
+/* Theme editor ------------------------------------------------------------ */
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
+.theme-editor .colonnes,
+.theme-editor > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.theme-editor > div > div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.theme-editor > div > div input {
+  flex: 1;
 }

@@ -12,7 +12,11 @@ export function JoinBoardPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!boardId) {
-    return <p>Lien de board invalide.</p>;
+    return (
+      <div className="page page-narrow">
+        <p>Lien de board invalide.</p>
+      </div>
+    );
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -36,12 +40,12 @@ export function JoinBoardPage() {
   }
 
   return (
-    <div>
+    <div className="page page-narrow">
       <h1>Rejoindre le board de rétrospective</h1>
-      <form onSubmit={handleSubmit}>
+      <form className="card form" onSubmit={handleSubmit}>
         <label>
           Votre nom
-          <input value={nomAffiche} onChange={(e) => setNomAffiche(e.target.value)} required />
+          <input value={nomAffiche} onChange={(e) => setNomAffiche(e.target.value)} required autoFocus />
         </label>
         {error && <p role="alert">{error}</p>}
         <button type="submit" disabled={submitting}>
