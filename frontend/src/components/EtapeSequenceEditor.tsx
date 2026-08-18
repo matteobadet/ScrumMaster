@@ -19,6 +19,8 @@ export interface EtapeBuilder {
   options: string[];
   /** URL d'illustration personnalisée par niveau ROTI (specs/008-roti-mini-jeu, US2) ; vide si non personnalisé. */
   rotiVisuels: Record<string, string>;
+  /** Mot à deviner pour le mini-jeu Pendu (specs/011-pendu-lien-externe, US1). */
+  motPendu: string;
 }
 
 function genererId(): string {
@@ -39,6 +41,7 @@ export function creerEtapeBuilder(
     question: '',
     options: ['', ''],
     rotiVisuels: {},
+    motPendu: '',
   };
 }
 
@@ -73,21 +76,28 @@ export function buildEtapeRequests(
         return { error: 'Un mini-jeu doit être choisi pour chaque étape de type Mini-jeu.' };
       }
 
-      const estRoti = miniJeux.find((m) => m.id === etape.miniJeuCatalogueId)?.typeInterne === 'roti';
-      const rotiPersonnalisations = estRoti
-        ? Object.entries(etape.rotiVisuels)
-            .filter(([, url]) => url.trim().length > 0)
-            .map(([niveau, url]) => ({ niveau, urlIllustration: url.trim() }))
-        : [];
+      const typeInterne = miniJeux.find((m) => m.id === etape.miniJeuCatalogueId)?.typeInterne;
+
+      const rotiPersonnalisations =
+        typeInterne === 'roti'
+          ? Object.entries(etape.rotiVisuels)
+              .filter(([, url]) => url.trim().length > 0)
+              .map(([niveau, url]) => ({ niveau, urlIllustration: url.trim() }))
+          : [];
 
       if (rotiPersonnalisations.some((v) => urlIllustrationInvalide(v.urlIllustration))) {
         return { error: "L'illustration d'un niveau ROTI doit être une URL en https://." };
+      }
+
+      if (typeInterne === 'pendu' && !etape.motPendu.trim()) {
+        return { error: 'Un mot à deviner est requis pour chaque étape de type Pendu.' };
       }
 
       requests.push({
         type: 'MiniJeu',
         miniJeuCatalogueId: etape.miniJeuCatalogueId,
         rotiPersonnalisations: rotiPersonnalisations.length > 0 ? rotiPersonnalisations : null,
+        motPendu: typeInterne === 'pendu' ? etape.motPendu.trim() : null,
       });
     } else {
       const question = etape.question.trim();
@@ -213,6 +223,17 @@ export function EtapeSequenceEditor({ etapes, themes, miniJeux, onChange }: Etap
                 );
               })}
             </div>
+          )}
+
+          {etape.type === 'MiniJeu' && miniJeux.find((m) => m.id === etape.miniJeuCatalogueId)?.typeInterne === 'pendu' && (
+            <label>
+              Mot à deviner
+              <input
+                value={etape.motPendu}
+                onChange={(e) => update(index, { motPendu: e.target.value })}
+                placeholder="RETROSPECTIVE"
+              />
+            </label>
           )}
 
           {etape.type === 'PollPersonnalise' && (

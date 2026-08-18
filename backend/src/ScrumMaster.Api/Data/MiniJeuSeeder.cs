@@ -27,6 +27,20 @@ public static class MiniJeuSeeder
             typeInterne: "roti",
             description: "Chaque participant évalue si le temps investi dans la rétrospective en valait la peine."
         );
+
+        await EnsureMiniJeuAsync(
+            db,
+            nom: "Pendu",
+            typeInterne: "pendu",
+            description: "L'équipe devine collectivement un mot choisi par le facilitateur, lettre par lettre."
+        );
+
+        await EnsureMiniJeuAsync(
+            db,
+            nom: "Lien externe",
+            typeInterne: "lien-externe",
+            description: "Le facilitateur redirige l'équipe vers un outil de jeu en ligne externe (Gartic Phone, Skribbl.io...)."
+        );
     }
 
     private static async Task EnsureMiniJeuAsync(ScrumMasterDbContext db, string nom, string typeInterne, string description)

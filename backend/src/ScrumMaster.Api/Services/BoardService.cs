@@ -94,6 +94,9 @@ public class BoardService(ScrumMasterDbContext db, EtapeService etapeService)
             .Include(b => b.Etapes)
             .ThenInclude(e => e.VisuelsRoti)
             .Include(b => b.Etapes)
+            .ThenInclude(e => e.LettresProposeesPendu)
+            .ThenInclude(l => l.ParticipantProposant)
+            .Include(b => b.Etapes)
             .ThenInclude(e => e.Options)
             .Include(b => b.Etapes)
             .ThenInclude(e => e.Reponses)
@@ -229,6 +232,30 @@ public class BoardService(ScrumMasterDbContext db, EtapeService etapeService)
                     ? etape.ReponsesRoti.FirstOrDefault(r => r.ParticipantId == pidRoti)?.Niveau.ToString()
                     : null;
 
+                IReadOnlyList<string?>? motMasquePendu = null;
+                IReadOnlyList<LettreProposeePenduDto>? lettresProposeesPendu = null;
+                int? essaisRestantsPendu = null;
+                int? maxEssaisPendu = null;
+                string? etatPendu = null;
+                string? motCompletPendu = null;
+
+                if (etape.MotAPendu is { } motAPendu)
+                {
+                    var (motMasque, essaisRestants, etat, motComplet) = PenduGameState.Calculer(
+                        motAPendu,
+                        etape.LettresProposeesPendu.Select(l => (l.Lettre, l.Correcte))
+                    );
+                    motMasquePendu = motMasque;
+                    lettresProposeesPendu = etape
+                        .LettresProposeesPendu.OrderBy(l => l.DateProposition)
+                        .Select(l => new LettreProposeePenduDto(l.Lettre.ToString(), l.Correcte, l.ParticipantProposant?.NomAffiche ?? string.Empty))
+                        .ToList();
+                    essaisRestantsPendu = essaisRestants;
+                    maxEssaisPendu = PenduGameState.MaxEssais;
+                    etatPendu = etat;
+                    motCompletPendu = motComplet;
+                }
+
                 return new EtapeDto(
                     etape.Id,
                     etape.Type.ToString(),
@@ -250,7 +277,15 @@ public class BoardService(ScrumMasterDbContext db, EtapeService etapeService)
                         .ReponsesRoti.Select(r => new ReponseRotiDto(r.ParticipantId, r.Participant?.NomAffiche ?? string.Empty, r.Niveau.ToString()))
                         .ToList(),
                     monNiveauRoti,
-                    etape.VisuelsRoti.Select(v => new NiveauVisuelDto(v.Niveau.ToString(), v.UrlIllustration)).ToList()
+                    etape.VisuelsRoti.Select(v => new NiveauVisuelDto(v.Niveau.ToString(), v.UrlIllustration)).ToList(),
+                    motMasquePendu,
+                    lettresProposeesPendu,
+                    essaisRestantsPendu,
+                    maxEssaisPendu,
+                    etatPendu,
+                    motCompletPendu,
+                    etape.LienExterneNom,
+                    etape.LienExterneUrl
                 );
 
             case TypeEtape.PollPersonnalise:

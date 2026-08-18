@@ -40,6 +40,7 @@ export interface EtapeRequest {
   question?: string | null;
   options?: string[] | null;
   rotiPersonnalisations?: NiveauVisuel[] | null;
+  motPendu?: string | null;
 }
 
 export interface CreateBoardRequest {
@@ -121,6 +122,13 @@ export interface OptionPoll {
   decompte: number;
 }
 
+/** Une lettre proposée pour le mini-jeu "Pendu" (specs/011-pendu-lien-externe). */
+export interface LettreProposeePendu {
+  lettre: string;
+  correcte: boolean;
+  nomAffiche: string;
+}
+
 /**
  * Une étape de la séquence du board, quel que soit son type — les champs non pertinents pour ce
  * type sont null (union étiquetée, specs/006-systeme-extensions-etapes, research.md#1).
@@ -143,6 +151,14 @@ export interface EtapeState {
   reponsesRoti: ReponseRoti[] | null;
   monNiveauRoti: string | null;
   visuelsRoti: NiveauVisuel[] | null;
+  motMasquePendu: (string | null)[] | null;
+  lettresProposeesPendu: LettreProposeePendu[] | null;
+  essaisRestantsPendu: number | null;
+  maxEssaisPendu: number | null;
+  etatPendu: 'EnCours' | 'Victoire' | 'Defaite' | null;
+  motCompletPendu: string | null;
+  lienExterneNom: string | null;
+  lienExterneUrl: string | null;
 }
 
 export interface BoardState {

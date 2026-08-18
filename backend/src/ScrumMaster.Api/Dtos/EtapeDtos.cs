@@ -11,7 +11,8 @@ public record EtapeRequestDto(
     Guid? MiniJeuCatalogueId,
     string? Question,
     IReadOnlyList<string>? Options,
-    IReadOnlyList<NiveauVisuelDto>? RotiPersonnalisations = null
+    IReadOnlyList<NiveauVisuelDto>? RotiPersonnalisations = null,
+    string? MotPendu = null
 );
 
 public record MiniJeuRefDto(Guid Id, string Nom, string TypeInterne);
@@ -21,6 +22,9 @@ public record ReponseMeteoDto(Guid ParticipantId, string NomAffiche, string Hume
 public record ReponseRotiDto(Guid ParticipantId, string NomAffiche, string Niveau);
 
 public record OptionPollDto(Guid Id, string Texte, int Decompte);
+
+/// <summary>Une lettre proposée pour le mini-jeu "Pendu" (specs/011-pendu-lien-externe).</summary>
+public record LettreProposeePenduDto(string Lettre, bool Correcte, string NomAffiche);
 
 /// <summary>État complet d'une étape, quel que soit son type — les champs non pertinents pour le
 /// type de l'étape sont null (union étiquetée, research.md#1).</summary>
@@ -41,5 +45,13 @@ public record EtapeDto(
     Guid? MaReponseOptionId,
     IReadOnlyList<ReponseRotiDto>? ReponsesRoti = null,
     string? MonNiveauRoti = null,
-    IReadOnlyList<NiveauVisuelDto>? VisuelsRoti = null
+    IReadOnlyList<NiveauVisuelDto>? VisuelsRoti = null,
+    IReadOnlyList<string?>? MotMasquePendu = null,
+    IReadOnlyList<LettreProposeePenduDto>? LettresProposeesPendu = null,
+    int? EssaisRestantsPendu = null,
+    int? MaxEssaisPendu = null,
+    string? EtatPendu = null,
+    string? MotCompletPendu = null,
+    string? LienExterneNom = null,
+    string? LienExterneUrl = null
 );

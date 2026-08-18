@@ -156,6 +156,46 @@ public class RetroBoardHub(
             );
     }
 
+    public async Task ProposerLettrePendu(Guid boardId, Guid etapeId, string lettre)
+    {
+        var callerId = await ResolveCallerParticipantIdAsync(boardId);
+
+        var result = await RunOrThrowHubExceptionAsync(() => miniJeuService.ProposerLettrePenduAsync(boardId, etapeId, callerId, lettre));
+        if (result is null)
+        {
+            return;
+        }
+
+        await Clients
+            .Group(boardId.ToString())
+            .SendAsync(
+                "LettrePenduProposee",
+                new
+                {
+                    etapeId,
+                    lettre = result.Lettre,
+                    correcte = result.Correcte,
+                    motMasquePendu = result.MotMasque,
+                    lettresProposeesPendu = result.LettresProposees,
+                    essaisRestantsPendu = result.EssaisRestants,
+                    maxEssaisPendu = result.MaxEssais,
+                    etatPendu = result.Etat,
+                    motCompletPendu = result.MotComplet,
+                }
+            );
+    }
+
+    public async Task DefinirLienExterne(Guid boardId, Guid etapeId, string nom, string url)
+    {
+        var callerId = await ResolveCallerParticipantIdAsync(boardId);
+
+        var result = await RunOrThrowHubExceptionAsync(() => miniJeuService.DefinirLienExterneAsync(boardId, etapeId, callerId, nom, url));
+
+        await Clients
+            .Group(boardId.ToString())
+            .SendAsync("LienExterneDefini", new { etapeId, nom = result.Nom, url = result.Url });
+    }
+
     public async Task RepondrePollPersonnalise(Guid boardId, Guid etapeId, Guid optionId)
     {
         var callerId = await ResolveCallerParticipantIdAsync(boardId);

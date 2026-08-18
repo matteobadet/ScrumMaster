@@ -635,6 +635,89 @@
   flex: none;
 }
 
+/* Étape "Pendu" ------------------------------------------------------------ */
+
+.pendu-mot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pendu-case {
+  min-width: 28px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-bottom: 2px solid var(--border);
+}
+
+.pendu-case--revelee {
+  color: var(--text-h);
+}
+
+.pendu-case--cachee {
+  color: transparent;
+}
+
+.pendu-essais {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.pendu-clavier {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pendu-lettre {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-h);
+}
+
+.pendu-lettre--correcte {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.pendu-lettre--incorrecte {
+  opacity: 0.4;
+}
+
+.pendu-historique {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Étape "Lien externe" ------------------------------------------------------ */
+
+.lien-externe-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.lien-externe-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* Étape "Poll personnalisé" ------------------------------------------------ */
 
 .etape-poll-personnalise {

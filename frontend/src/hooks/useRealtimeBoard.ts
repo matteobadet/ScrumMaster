@@ -56,6 +56,22 @@ interface ReponsePollPersonnaliseChangeeEvent {
   decompteParOption: { optionId: string; decompte: number }[];
 }
 
+interface LettrePenduProposeeEvent {
+  etapeId: string;
+  motMasquePendu: (string | null)[];
+  lettresProposeesPendu: { lettre: string; correcte: boolean; nomAffiche: string }[];
+  essaisRestantsPendu: number;
+  maxEssaisPendu: number;
+  etatPendu: 'EnCours' | 'Victoire' | 'Defaite';
+  motCompletPendu: string | null;
+}
+
+interface LienExterneDefiniEvent {
+  etapeId: string;
+  nom: string;
+  url: string;
+}
+
 /**
  * Applique une mise à jour à l'étape "Colonnes et post-its" active du board (au plus une à la
  * fois, specs/006-systeme-extensions-etapes) — les événements post-its/votes ne portent pas
@@ -273,6 +289,28 @@ export function useRealtimeBoard(boardId: string | undefined, participant: Curre
                 }),
               }))
             : current,
+        );
+      });
+
+      connection.on('LettrePenduProposee', (evt: LettrePenduProposeeEvent) => {
+        setBoard((current) =>
+          current
+            ? updateEtapeById(current, evt.etapeId, (etape) => ({
+                ...etape,
+                motMasquePendu: evt.motMasquePendu,
+                lettresProposeesPendu: evt.lettresProposeesPendu,
+                essaisRestantsPendu: evt.essaisRestantsPendu,
+                maxEssaisPendu: evt.maxEssaisPendu,
+                etatPendu: evt.etatPendu,
+                motCompletPendu: evt.motCompletPendu,
+              }))
+            : current,
+        );
+      });
+
+      connection.on('LienExterneDefini', ({ etapeId, nom, url }: LienExterneDefiniEvent) => {
+        setBoard((current) =>
+          current ? updateEtapeById(current, etapeId, (etape) => ({ ...etape, lienExterneNom: nom, lienExterneUrl: url })) : current,
         );
       });
 

@@ -44,6 +44,8 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
 
     public DbSet<EtapeRotiVisuel> VisuelsRoti => Set<EtapeRotiVisuel>();
 
+    public DbSet<LettreProposeePendu> LettresProposeesPendu => Set<LettreProposeePendu>();
+
     public DbSet<OptionPollPersonnalise> OptionsPollPersonnalise => Set<OptionPollPersonnalise>();
 
     public DbSet<ReponsePollPersonnalise> ReponsesPollPersonnalise => Set<ReponsePollPersonnalise>();
@@ -247,6 +249,26 @@ public class ScrumMasterDbContext(DbContextOptions<ScrumMasterDbContext> options
                 .HasOne(e => e.Etape)
                 .WithMany(et => et.VisuelsRoti)
                 .HasForeignKey(e => e.EtapeId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Etape>(entity =>
+        {
+            entity.Property(e => e.LienExterneUrl).HasMaxLength(2048);
+        });
+
+        modelBuilder.Entity<LettreProposeePendu>(entity =>
+        {
+            entity.HasKey(e => new { e.EtapeId, e.Lettre });
+            entity
+                .HasOne(e => e.Etape)
+                .WithMany(et => et.LettresProposeesPendu)
+                .HasForeignKey(e => e.EtapeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne(e => e.ParticipantProposant)
+                .WithMany()
+                .HasForeignKey(e => e.ParticipantProposantId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

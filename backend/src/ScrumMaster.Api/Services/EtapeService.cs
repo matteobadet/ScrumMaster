@@ -60,7 +60,7 @@ public class EtapeService(ScrumMasterDbContext db)
                 await ResolveThemeAsync(demande.ThemeId, demande.ThemePersonnalise),
                 statut
             ),
-            TypeEtape.MiniJeu => await CreerEtapeMiniJeuAsync(ordre, demande.MiniJeuCatalogueId, demande.RotiPersonnalisations, statut),
+            TypeEtape.MiniJeu => await CreerEtapeMiniJeuAsync(ordre, demande.MiniJeuCatalogueId, demande.RotiPersonnalisations, demande.MotPendu, statut),
             TypeEtape.PollPersonnalise => CreerEtapePollPersonnalise(ordre, demande.Question, demande.Options, statut),
             _ => throw new DomainValidationException($"Type d'étape \"{demande.Type}\" non reconnu."),
         };
@@ -81,6 +81,7 @@ public class EtapeService(ScrumMasterDbContext db)
         int ordre,
         Guid? miniJeuCatalogueId,
         IReadOnlyList<NiveauVisuelDto>? rotiPersonnalisations,
+        string? motPendu,
         StatutEtape statut
     )
     {
@@ -100,6 +101,19 @@ public class EtapeService(ScrumMasterDbContext db)
             throw new DomainValidationException("Seul le mini-jeu ROTI accepte une personnalisation de visuel par niveau.");
         }
 
+        if (!string.IsNullOrWhiteSpace(motPendu) && miniJeu.TypeInterne != "pendu")
+        {
+            throw new DomainValidationException("Seul le mini-jeu Pendu accepte un mot à deviner.");
+        }
+
+        if (miniJeu.TypeInterne == "pendu")
+        {
+            if (string.IsNullOrWhiteSpace(motPendu) || !motPendu.Any(char.IsLetter))
+            {
+                throw new DomainValidationException("Une étape Pendu doit avoir un mot à deviner comportant au moins une lettre.");
+            }
+        }
+
         var etape = new Etape
         {
             Id = Guid.NewGuid(),
@@ -107,6 +121,7 @@ public class EtapeService(ScrumMasterDbContext db)
             Ordre = ordre,
             Statut = statut,
             MiniJeuCatalogueId = miniJeuCatalogueId,
+            MotAPendu = miniJeu.TypeInterne == "pendu" ? motPendu!.Trim() : null,
         };
 
         if (rotiPersonnalisations is { Count: > 0 })
@@ -119,12 +134,7 @@ public class EtapeService(ScrumMasterDbContext db)
                         throw new DomainValidationException($"Niveau ROTI \"{v.Niveau}\" non reconnu.");
                     }
 
-                    if (string.IsNullOrWhiteSpace(v.UrlIllustration))
-                    {
-                        throw new DomainValidationException("L'URL d'illustration d'un niveau ROTI personnalisé ne peut pas être vide.");
-                    }
-
-                    ValidateUrlIllustration(v.UrlIllustration);
+                    UrlValidation.ValiderHttps(v.UrlIllustration, "L'URL d'illustration d'un niveau ROTI personnalisé", requis: true);
 
                     return new EtapeRotiVisuel
                     {
@@ -258,7 +268,7 @@ public class EtapeService(ScrumMasterDbContext db)
             foreach (var colonne in colonnes)
             {
                 ValidateCouleur(colonne.Couleur);
-                ValidateUrlIllustration(colonne.UrlIllustration);
+                UrlValidation.ValiderHttps(colonne.UrlIllustration, "L'URL d'illustration d'une colonne");
                 ValidateSousTitre(colonne.SousTitre);
             }
 
@@ -285,28 +295,6 @@ public class EtapeService(ScrumMasterDbContext db)
         if (couleur?.Length > 30)
         {
             throw new DomainValidationException("La couleur d'une colonne ne doit pas dépasser 30 caractères.");
-        }
-    }
-
-    /// <summary>
-    /// L'URL d'illustration DOIT être une adresse HTTPS syntaxiquement valide (FR-009) ; jamais
-    /// récupérée côté serveur (research.md#2/#3).
-    /// </summary>
-    private static void ValidateUrlIllustration(string? url)
-    {
-        if (string.IsNullOrEmpty(url))
-        {
-            return;
-        }
-
-        if (url.Length > 2048)
-        {
-            throw new DomainValidationException("L'URL d'illustration d'une colonne ne doit pas dépasser 2048 caractères.");
-        }
-
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
-        {
-            throw new DomainValidationException("L'URL d'illustration d'une colonne doit être une adresse HTTPS valide.");
         }
     }
 

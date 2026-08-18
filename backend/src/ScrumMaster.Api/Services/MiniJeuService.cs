@@ -6,6 +6,21 @@ namespace ScrumMaster.Api.Services;
 
 public record RepondreMiniJeuResult(Guid ParticipantId, string NomAffiche, string Reponse);
 
+public record LettreProposeeResult(string Lettre, bool Correcte, string NomAffiche);
+
+public record ProposerLettreResult(
+    string Lettre,
+    bool Correcte,
+    IReadOnlyList<string?> MotMasque,
+    IReadOnlyList<LettreProposeeResult> LettresProposees,
+    int EssaisRestants,
+    int MaxEssais,
+    string Etat,
+    string? MotComplet
+);
+
+public record DefinirLienExterneResult(string Nom, string Url);
+
 /// <summary>
 /// Réponse à une étape de type Mini-jeu (US2, specs/006-systeme-extensions-etapes). Le mini-jeu
 /// concret ("Météo d'équipe" ou "ROTI") est résolu via <see cref="MiniJeuCatalogue.TypeInterne"/>
@@ -85,6 +100,111 @@ public class MiniJeuService(ScrumMasterDbContext db)
         await db.SaveChangesAsync();
 
         return new RepondreMiniJeuResult(participantId, participant.NomAffiche, niveau.ToString());
+    }
+
+    /// <summary>
+    /// Propose une lettre pour la partie de Pendu de cette étape (US1, specs/011-pendu-lien-
+    /// externe). Journal partagé append-only, distinct de <see cref="RepondreAsync"/>
+    /// (research.md#1) : renvoie <c>null</c> (no-op, FR-006) si la lettre a déjà été proposée par
+    /// n'importe qui.
+    /// </summary>
+    public async Task<ProposerLettreResult?> ProposerLettrePenduAsync(Guid boardId, Guid etapeId, Guid callerParticipantId, string lettre)
+    {
+        var etape = await GetEtapeActiveAsync(boardId, etapeId);
+        if (etape.MiniJeuCatalogue?.TypeInterne != "pendu")
+        {
+            throw new DomainValidationException("Cette étape n'est pas un mini-jeu Pendu.");
+        }
+
+        await GetParticipantAsync(boardId, callerParticipantId);
+
+        if (string.IsNullOrEmpty(lettre) || lettre.Length != 1 || !char.IsLetter(lettre[0]))
+        {
+            throw new DomainValidationException("La lettre proposée doit être un unique caractère alphabétique.");
+        }
+
+        var lettreNormalisee = char.ToUpperInvariant(lettre[0]);
+
+        var lettresExistantes = await db.LettresProposeesPendu.Where(l => l.EtapeId == etapeId).ToListAsync();
+
+        var (_, _, etatAvant, _) = PenduGameState.Calculer(etape.MotAPendu!, lettresExistantes.Select(l => (l.Lettre, l.Correcte)));
+        if (etatAvant != "EnCours")
+        {
+            throw new DomainValidationException("Cette partie de Pendu est déjà terminée.");
+        }
+
+        if (lettresExistantes.Any(l => l.Lettre == lettreNormalisee))
+        {
+            return null;
+        }
+
+        var correcte = etape.MotAPendu!.Any(c => char.ToUpperInvariant(c) == lettreNormalisee);
+        db.LettresProposeesPendu.Add(
+            new LettreProposeePendu
+            {
+                EtapeId = etapeId,
+                Lettre = lettreNormalisee,
+                Correcte = correcte,
+                ParticipantProposantId = callerParticipantId,
+                DateProposition = DateTimeOffset.UtcNow,
+            }
+        );
+        await db.SaveChangesAsync();
+
+        var lettresAvecParticipant = await db
+            .LettresProposeesPendu.Where(l => l.EtapeId == etapeId)
+            .Include(l => l.ParticipantProposant)
+            .OrderBy(l => l.DateProposition)
+            .ToListAsync();
+
+        var (motMasque, essaisRestants, etat, motComplet) = PenduGameState.Calculer(
+            etape.MotAPendu!,
+            lettresAvecParticipant.Select(l => (l.Lettre, l.Correcte))
+        );
+
+        return new ProposerLettreResult(
+            lettreNormalisee.ToString(),
+            correcte,
+            motMasque,
+            lettresAvecParticipant.Select(l => new LettreProposeeResult(l.Lettre.ToString(), l.Correcte, l.ParticipantProposant?.NomAffiche ?? string.Empty)).ToList(),
+            essaisRestants,
+            PenduGameState.MaxEssais,
+            etat,
+            motComplet
+        );
+    }
+
+    /// <summary>
+    /// Définit ou remplace le lien externe d'une étape, en direct pendant qu'elle est active (US2,
+    /// specs/011-pendu-lien-externe) — réservé au facilitateur, même pattern que
+    /// <c>BoardService.ChangeThemeAsync</c> (research.md#5).
+    /// </summary>
+    public async Task<DefinirLienExterneResult> DefinirLienExterneAsync(Guid boardId, Guid etapeId, Guid callerParticipantId, string nom, string url)
+    {
+        var etape = await GetEtapeActiveAsync(boardId, etapeId);
+        if (etape.MiniJeuCatalogue?.TypeInterne != "lien-externe")
+        {
+            throw new DomainValidationException("Cette étape n'est pas un mini-jeu Lien externe.");
+        }
+
+        var caller = await GetParticipantAsync(boardId, callerParticipantId);
+        if (caller.Role != ParticipantRole.Facilitateur)
+        {
+            throw new DomainForbiddenException("Seul le facilitateur peut définir le lien externe.");
+        }
+
+        if (string.IsNullOrWhiteSpace(nom))
+        {
+            throw new DomainValidationException("Le nom du jeu externe ne peut pas être vide.");
+        }
+
+        UrlValidation.ValiderHttps(url, "L'URL du jeu externe", requis: true);
+
+        etape.LienExterneNom = nom.Trim();
+        etape.LienExterneUrl = url;
+        await db.SaveChangesAsync();
+
+        return new DefinirLienExterneResult(etape.LienExterneNom, etape.LienExterneUrl);
     }
 
     private async Task<Etape> GetEtapeActiveAsync(Guid boardId, Guid etapeId)

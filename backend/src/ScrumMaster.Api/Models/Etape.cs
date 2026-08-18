@@ -51,6 +51,14 @@ public class Etape
 
     public List<EtapeRotiVisuel> VisuelsRoti { get; set; } = new();
 
+    public string? MotAPendu { get; set; }
+
+    public List<LettreProposeePendu> LettresProposeesPendu { get; set; } = new();
+
+    public string? LienExterneNom { get; set; }
+
+    public string? LienExterneUrl { get; set; }
+
     // Poll personnalisé (Type == PollPersonnalise)
     public string? Question { get; set; }
 

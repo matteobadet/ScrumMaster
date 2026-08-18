@@ -7,6 +7,8 @@ import { Colonne } from '../components/Colonne';
 import { ThemeEditor, buildColonnesPersonnalisees } from '../components/ThemeEditor';
 import { EtapeMiniJeuMeteo } from '../components/EtapeMiniJeuMeteo';
 import { EtapeMiniJeuRoti } from '../components/EtapeMiniJeuRoti';
+import { EtapeMiniJeuPendu } from '../components/EtapeMiniJeuPendu';
+import { EtapeMiniJeuLienExterne } from '../components/EtapeMiniJeuLienExterne';
 import { EtapePollPersonnalise } from '../components/EtapePollPersonnalise';
 import { PointDeSprintPanel } from '../components/PointDeSprintPanel';
 import type { EtapeState, ThemeSelection, ThemeSummary } from '../types';
@@ -154,11 +156,33 @@ export function BoardPage() {
       case 'ColonnesEtPostIts':
         return renderColonnesEtPostIts(etape, readOnly);
       case 'MiniJeu':
-        return etape.miniJeu?.typeInterne === 'roti' ? (
-          <EtapeMiniJeuRoti etape={etape} readOnly={readOnly} onRepondre={(niveau) => invoke('RepondreMiniJeu', boardId, etape.id, niveau)} />
-        ) : (
-          <EtapeMiniJeuMeteo etape={etape} readOnly={readOnly} onRepondre={(humeur) => invoke('RepondreMiniJeu', boardId, etape.id, humeur)} />
-        );
+        switch (etape.miniJeu?.typeInterne) {
+          case 'roti':
+            return (
+              <EtapeMiniJeuRoti etape={etape} readOnly={readOnly} onRepondre={(niveau) => invoke('RepondreMiniJeu', boardId, etape.id, niveau)} />
+            );
+          case 'pendu':
+            return (
+              <EtapeMiniJeuPendu
+                etape={etape}
+                readOnly={readOnly}
+                onProposerLettre={(lettre) => invoke('ProposerLettrePendu', boardId, etape.id, lettre)}
+              />
+            );
+          case 'lien-externe':
+            return (
+              <EtapeMiniJeuLienExterne
+                etape={etape}
+                readOnly={readOnly}
+                estFacilitateur={participant.role === 'Facilitateur'}
+                onDefinirLien={(nom, url) => invoke('DefinirLienExterne', boardId, etape.id, nom, url)}
+              />
+            );
+          default:
+            return (
+              <EtapeMiniJeuMeteo etape={etape} readOnly={readOnly} onRepondre={(humeur) => invoke('RepondreMiniJeu', boardId, etape.id, humeur)} />
+            );
+        }
       case 'PollPersonnalise':
         return (
           <EtapePollPersonnalise
