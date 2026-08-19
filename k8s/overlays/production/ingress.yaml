@@ -9,11 +9,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        # TODO: remplacer par le domaine réel du VPS avant application.
-        - scrummaster.example.com
+        - scrummaster.mbadet.fr
       secretName: scrummaster-tls
   rules:
-    - host: scrummaster.example.com
+    - host: scrummaster.mbadet.fr
       http:
         paths:
           # API REST et hub SignalR routés vers le backend sur le même domaine que le frontend :

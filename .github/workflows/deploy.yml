@@ -1,0 +1,64 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API
+        uses: docker/build-push-action@v6
+        with:
+          context: backend/src/ScrumMaster.Api
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/scrummaster-api:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/scrummaster-api:latest
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/scrummaster-frontend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/scrummaster-frontend:latest
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > "$HOME/.kube/config"
+
+      - name: Write kustomize secret env files
+        run: |
+          echo "connectionString=${{ secrets.SCRUMMASTER_DB_CONNECTION }}" > k8s/overlays/production/connection.env
+          {
+            echo "MicrosoftAppId=${{ secrets.BOT_APP_ID }}"
+            echo "MicrosoftAppPassword=${{ secrets.BOT_APP_PASSWORD }}"
+            echo "MicrosoftAppTenantId=${{ secrets.BOT_APP_TENANT_ID }}"
+          } > k8s/overlays/production/bot-credentials.env
+
+      - name: Apply manifests (creates on first run, updates otherwise)
+        run: |
+          sed -i "s|ghcr.io/${{ github.repository_owner }}/scrummaster-api:latest|ghcr.io/${{ github.repository_owner }}/scrummaster-api:${{ github.sha }}|" k8s/base/api-deployment.yaml
+          sed -i "s|ghcr.io/${{ github.repository_owner }}/scrummaster-frontend:latest|ghcr.io/${{ github.repository_owner }}/scrummaster-frontend:${{ github.sha }}|" k8s/base/frontend-deployment.yaml
+          kubectl apply -k k8s/overlays/production
+          kubectl rollout status deployment/scrummaster-api -n scrummaster
+          kubectl rollout status deployment/scrummaster-frontend -n scrummaster
