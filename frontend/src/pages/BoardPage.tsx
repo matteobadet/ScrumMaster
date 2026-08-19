@@ -107,7 +107,7 @@ export function BoardPage() {
 
     if (themeSelection.kind === 'custom') {
       const built = buildColonnesPersonnalisees(themeSelection.colonnes);
-      if (built.error) {
+      if ('error' in built) {
         setThemeError(built.error);
         return;
       }
@@ -133,7 +133,7 @@ export function BoardPage() {
             colonne={colonne}
             colonnesDisponibles={etape.colonnes ?? []}
             postIts={(etape.postIts ?? []).filter((p) => p.colonneId === colonne.id)}
-            currentParticipantId={participant.participantId}
+            currentParticipantId={participant!.participantId}
             votesRestants={etape.mesVotesRestants}
             readOnly={readOnly}
             onAddPostIt={(colonneId, texte) => invoke('AddPostIt', boardId, colonneId, texte)}
@@ -143,7 +143,7 @@ export function BoardPage() {
             onVotePostIt={(postItId) => invoke('Vote', boardId, postItId)}
             onRemoveVotePostIt={(postItId) => invoke('RemoveVote', boardId, postItId)}
             onExportPostIt={
-              !readOnly && participant.role === 'Facilitateur' ? (postItId) => invoke('ExportPostIt', boardId, postItId) : undefined
+              !readOnly && participant!.role === 'Facilitateur' ? (postItId) => invoke('ExportPostIt', boardId, postItId) : undefined
             }
           />
         ))}
@@ -174,7 +174,7 @@ export function BoardPage() {
               <EtapeMiniJeuLienExterne
                 etape={etape}
                 readOnly={readOnly}
-                estFacilitateur={participant.role === 'Facilitateur'}
+                estFacilitateur={participant!.role === 'Facilitateur'}
                 onDefinirLien={(nom, url) => invoke('DefinirLienExterne', boardId, etape.id, nom, url)}
               />
             );
@@ -188,7 +188,7 @@ export function BoardPage() {
           <EtapePollPersonnalise
             etape={etape}
             readOnly={readOnly}
-            onRepondre={(optionId) => repondrePollPersonnalise(boardId, etape.id, optionId)}
+            onRepondre={(optionId) => repondrePollPersonnalise(boardId!, etape.id, optionId)}
           />
         );
     }

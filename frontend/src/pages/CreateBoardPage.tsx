@@ -106,7 +106,7 @@ export function CreateBoardPage() {
     let colonnesNonVides: ColonneSummaire[] = [];
     if (!sequenceMode && themeSelection.kind === 'custom') {
       const built = buildColonnesPersonnalisees(themeSelection.colonnes);
-      if (built.error) {
+      if ('error' in built) {
         setError(built.error);
         return;
       }
@@ -116,7 +116,7 @@ export function CreateBoardPage() {
     let etapes: EtapeRequest[] | undefined;
     if (sequenceMode) {
       const built = buildEtapeRequests(etapeBuilders, miniJeux);
-      if (built.error) {
+      if (!('requests' in built)) {
         setError(built.error);
         return;
       }

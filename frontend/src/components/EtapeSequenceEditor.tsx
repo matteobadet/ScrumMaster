@@ -56,7 +56,7 @@ export function buildEtapeRequests(
     if (etape.type === 'ColonnesEtPostIts') {
       if (etape.themeSelection.kind === 'custom') {
         const built = buildColonnesPersonnalisees(etape.themeSelection.colonnes);
-        if (built.error) {
+        if ('error' in built) {
           return { error: built.error };
         }
         requests.push({
